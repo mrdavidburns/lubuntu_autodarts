@@ -67,6 +67,10 @@ The setup script will:
    - Enables panel auto-hide
 6. **Install GRUB Theme** - Custom bootloader menu with AUTODARTS branding
 7. **Install Plymouth Theme** - Custom boot splash with AutoDarts branding
+   - Automatically installs `plymouth-themes` package if needed
+   - Configures theme files and animations
+   - Verifies installation and theme selection
+   - Optimizes initramfs for fast graphical boot
 
 ## Manual Component Setup
 
@@ -155,8 +159,19 @@ Total boot time: ~15-20 seconds on modern hardware with SSD.
 
 ### Plymouth theme not showing
 - Ensure you rebooted after installation
-- Check theme installation: `sudo plymouth-set-default-theme -l`
-- Verify initramfs was updated: `sudo update-initramfs -u`
+- Check current theme: `plymouth-set-default-theme` (should show "autodarts")
+- List all themes: `plymouth-set-default-theme -l` (should include "autodarts")
+- Verify theme files exist: `ls -la /usr/share/plymouth/themes/autodarts/`
+- Check initramfs was updated: Look for "✓ Initramfs updated successfully" in setup output
+- Manually update if needed: `sudo update-initramfs -u -k all`
+- Test the theme without rebooting:
+  ```bash
+  sudo plymouthd
+  sudo plymouth --show-splash
+  # Wait a few seconds to see the animation
+  sudo plymouth --quit
+  ```
+- Verify GRUB settings: `grep GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub` (should include "quiet splash")
 
 ### Chrome not auto-launching
 - Check the autostart file exists: `cat ~/.config/autostart/google-chrome-fullscreen.desktop`

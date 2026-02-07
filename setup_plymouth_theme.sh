@@ -73,15 +73,23 @@ if [ -f "$GRUB_CFG" ]; then
     fi
 
     # Ensure quiet and splash are in the default command line
-    # We use sed to append 'splash' if it's missing, avoiding duplicates
+    # This robustly adds 'quiet splash' if they are missing and removes duplicates.
     if grep -q "GRUB_CMDLINE_LINUX_DEFAULT=" "$GRUB_CFG"; then
+        # Extract the current value, remove existing 'quiet' or 'splash', and then add them back.
+        sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1"/' "$GRUB_CFG" # Remove any quotes to simplify processing
         current_cmdline=$(grep "GRUB_CMDLINE_LINUX_DEFAULT=" "$GRUB_CFG" | cut -d'"' -f2)
-        if [[ "$current_cmdline" != *"splash"* ]]; then
-             sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="splash /' "$GRUB_CFG"
-        fi
-        if [[ "$current_cmdline" != *"quiet"* ]]; then
-             sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="quiet /' "$GRUB_CFG"
-        fi
+        
+        # Remove existing 'quiet' and 'splash' to avoid duplicates
+        current_cmdline_cleaned=$(echo "$current_cmdline" | sed -E 's/\b(quiet|splash)\b//g' | xargs)
+        
+        # Add 'quiet splash' to the beginning of the cleaned command line
+        new_cmdline="quiet splash $current_cmdline_cleaned"
+        
+        # Update the GRUB_CMDLINE_LINUX_DEFAULT line
+        sudo sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$(echo $new_cmdline | xargs)\"|" "$GRUB_CFG"
+    else
+        # If the line doesn't exist, add it
+        echo "GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash\"" | sudo tee -a "$GRUB_CFG"
     fi
     
     echo "Updating GRUB..."

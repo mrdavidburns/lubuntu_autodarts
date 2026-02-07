@@ -189,28 +189,44 @@ Plymouth is the boot splash framework used during system startup. It displays th
 
 ### Existing Implementation (`setup_plymouth_theme.sh`)
 
-The Plymouth theme was already implemented and includes:
+The Plymouth theme implementation includes comprehensive installation and verification:
 
-1. **Theme Files**:
+1. **Package Installation** (NEW):
+   - Automatically checks for Plymouth installation
+   - Installs `plymouth-themes` package if not present
+   - Includes error handling for failed installations
+
+2. **Theme Files**:
    - `autodarts.plymouth` - Theme definition
    - `autodarts.script` - Animation script
    - `autodarts_logo.png` - Main logo
-   - `powered_by_autodarts.png` - Watermark
+   - `powered_by_autodarts.png` - Watermark (optional)
    - `spinner/` - Animated spinner frames
 
-2. **GRUB Integration**:
+3. **Theme Registration and Verification** (ENHANCED):
+   - Registers theme with `update-alternatives` (priority 100)
+   - Sets theme as default
+   - **Verifies** theme was set correctly using `plymouth-set-default-theme`
+   - Lists all available themes for confirmation
+
+4. **GRUB Integration**:
    - `GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"` - Enables graphical boot
    - Graphics mode locked to prevent flicker
    - Seamless transition from GRUB
 
-3. **Initramfs Optimization**:
+5. **Initramfs Optimization**:
    - Early KMS module loading (as discussed above)
+   - Verification message confirms initramfs update completed
 
 ### How It Works
-1. Kernel loads with `quiet splash` parameters
-2. Initramfs loads graphics drivers early
-3. Plymouth starts as soon as KMS is available
-4. Animated AUTODARTS theme displays until desktop
+1. Script checks for and installs Plymouth if needed
+2. Theme files are copied to `/usr/share/plymouth/themes/autodarts/`
+3. Theme is registered and set as default
+4. **Installation is verified** to confirm theme is active
+5. Kernel loads with `quiet splash` parameters
+6. Initramfs loads graphics drivers early
+7. Plymouth starts as soon as KMS is available
+8. Animated AUTODARTS theme displays until desktop
 
 ---
 

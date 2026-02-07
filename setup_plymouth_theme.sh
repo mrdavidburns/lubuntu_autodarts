@@ -64,7 +64,7 @@ if [ -f "$REPO_DIR/images/autodarts_logo.png" ]; then
         echo "Verifying theme installation..."
         if command -v plymouth-set-default-theme &> /dev/null; then
             CURRENT_THEME=$(plymouth-set-default-theme)
-            if [ "$CURRENT_THEME" == "autodarts" ]; then
+            if [ "$CURRENT_THEME" = "autodarts" ]; then
                 echo "✓ AutoDarts theme successfully set as default."
             else
                 echo "Warning: Default theme is '$CURRENT_THEME', expected 'autodarts'."

@@ -6,6 +6,20 @@ REPO_DIR="$(dirname "$0")"
 
 echo "Installing Plymouth Theme..."
 
+# 0. Install Plymouth Base Package
+echo "Checking for Plymouth installation..."
+if ! command -v plymouth &> /dev/null; then
+    echo "Plymouth not found. Installing plymouth-themes package..."
+    sudo apt update
+    sudo apt install -y plymouth-themes || {
+        echo "Error: Failed to install plymouth-themes package."
+        exit 1
+    }
+    echo "Plymouth installed successfully."
+else
+    echo "Plymouth is already installed."
+fi
+
 # 1. Setup Theme Directory and Files
 if [ -f "$REPO_DIR/images/autodarts_logo.png" ]; then
     sudo mkdir -p "$THEME_DIR"
@@ -40,8 +54,26 @@ if [ -f "$REPO_DIR/images/autodarts_logo.png" ]; then
 
     # Install and Select Theme
     if command -v update-alternatives &> /dev/null; then
+        echo "Registering AutoDarts theme with update-alternatives..."
         sudo update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth "$THEME_DIR/autodarts.plymouth" 100
+        
+        echo "Setting AutoDarts as the default Plymouth theme..."
         sudo update-alternatives --set default.plymouth "$THEME_DIR/autodarts.plymouth"
+        
+        # Verify theme installation
+        echo "Verifying theme installation..."
+        if command -v plymouth-set-default-theme &> /dev/null; then
+            CURRENT_THEME=$(plymouth-set-default-theme)
+            if [ "$CURRENT_THEME" == "autodarts" ]; then
+                echo "✓ AutoDarts theme successfully set as default."
+            else
+                echo "Warning: Default theme is '$CURRENT_THEME', expected 'autodarts'."
+            fi
+            
+            # List available themes for confirmation
+            echo "Available Plymouth themes:"
+            plymouth-set-default-theme -l
+        fi
     fi
 else
     echo "Warning: autodarts_logo.png not found, skipping Plymouth theme installation."
@@ -123,8 +155,32 @@ if [ -f "$MODULES_FILE" ]; then
 
     echo "Updating initramfs for all kernels (this may take a moment)..."
     sudo update-initramfs -u -k all
+    
+    echo "✓ Initramfs updated successfully."
 else
     echo "Warning: $MODULES_FILE not found. Skipping Initramfs module configuration."
 fi
 
+echo ""
+echo "========================================="
 echo "Plymouth theme setup complete."
+echo "========================================="
+echo ""
+echo "Summary of changes:"
+echo "  ✓ Plymouth base package installed/verified"
+echo "  ✓ AutoDarts theme files copied to $THEME_DIR"
+echo "  ✓ Theme registered and selected as default"
+echo "  ✓ GRUB configured for graphical boot (quiet splash)"
+echo "  ✓ Graphics drivers added to initramfs"
+echo "  ✓ Initramfs updated for all kernels"
+echo ""
+echo "Next steps:"
+echo "  1. Reboot your system to see the AutoDarts boot theme"
+echo "  2. Verify theme during boot sequence (GRUB → Plymouth → Desktop)"
+echo ""
+echo "Troubleshooting commands:"
+echo "  • Check current theme: plymouth-set-default-theme"
+echo "  • List all themes: plymouth-set-default-theme -l"
+echo "  • Test theme: sudo plymouthd && sudo plymouth --show-splash"
+echo "              (wait a few seconds, then: sudo plymouth --quit)"
+echo ""

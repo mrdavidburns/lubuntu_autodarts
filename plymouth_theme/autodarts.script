@@ -19,20 +19,11 @@ frame_dir = "spinner/";
 frame_prefix = "autodarts_spinner_";
 frame_suffix = ".png";
 
-# Load animation frames into an array
-for (i = 1; i <= total_frames; i++)
-  {
-    # Generate frame number with 2-digit zero padding (e.g., 01, 02, ... 50)
-    if (i < 10)
-      frame_num = "0" + i;
-    else
-      frame_num = i;
-      
-    # Construct filename: spinner/autodarts_spinner_01.png
-    animation_images[i] = Image(frame_dir + frame_prefix + frame_num + frame_suffix);
-  }
+# --- Priority: Load and Display First Frame Immediately ---
+# Load ONLY the first frame initially for fastest initial display
+animation_images[1] = Image(frame_dir + frame_prefix + "01" + frame_suffix);
 
-# --- Sprite Setup ---
+# --- Sprite Setup (Immediate Display) ---
 spinner_sprite = Sprite();
 # Initialize with the first frame
 spinner_sprite.SetImage(animation_images[1]);
@@ -45,8 +36,7 @@ screen_height = Window.GetHeight();
 spinner_sprite.SetX(screen_width / 2 - animation_images[1].GetWidth() / 2);
 spinner_sprite.SetY(screen_height / 2 - animation_images[1].GetHeight() / 2);
 
-# --- Watermark Setup ---
-# Kept as per original script
+# --- Watermark Setup (Immediate Display) ---
 watermark_image = Image("powered_by_autodarts.png");
 watermark_sprite = Sprite(watermark_image);
 watermark_sprite.SetOpacity(1);
@@ -55,6 +45,20 @@ watermark_sprite.SetZ(10000);
 # Position Watermark relative to Spinner (Above, per original logic)
 watermark_sprite.SetX(screen_width / 2 - watermark_image.GetWidth() / 2);
 watermark_sprite.SetY(spinner_sprite.GetY() - watermark_image.GetHeight() - 20);
+
+# --- Load Remaining Animation Frames ---
+# Now that first frame is displayed, load the rest of the animation
+for (i = 2; i <= total_frames; i++)
+  {
+    # Generate frame number with 2-digit zero padding (e.g., 02, 03, ... 12)
+    if (i < 10)
+      frame_num = "0" + i;
+    else
+      frame_num = i;
+      
+    # Construct filename: spinner/autodarts_spinner_02.png, etc.
+    animation_images[i] = Image(frame_dir + frame_prefix + frame_num + frame_suffix);
+  }
 
 # --- Animation Loop ---
 progress = 1;

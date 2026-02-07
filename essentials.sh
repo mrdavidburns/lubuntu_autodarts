@@ -76,7 +76,11 @@ else
     echo "Warning: LXQt panel config not found. Panel customizations not applied."
 fi
 
-# 6. Install Plymouth Theme
+# 6. Install GRUB Theme
+echo "Setting up GRUB Theme for boot menu branding..."
+bash "$(dirname "$0")/setup_grub_theme.sh"
+
+# 7. Install Plymouth Theme
 echo "Setting up Plymouth Theme and Boot Options..."
 bash "$(dirname "$0")/setup_plymouth_theme.sh"
 

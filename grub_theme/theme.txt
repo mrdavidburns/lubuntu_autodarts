@@ -1,0 +1,73 @@
+# AUTODARTS GRUB Theme
+# Boot menu theme for AUTODARTS branded system
+
+# Main settings
+title-text: ""
+desktop-image: "background.png"
+desktop-color: "#000000"
+terminal-font: "Unifont Regular 16"
+
+# Boot menu appearance
++ boot_menu {
+    left = 25%
+    top = 35%
+    width = 50%
+    height = 50%
+    
+    item_font = "Unifont Regular 16"
+    item_color = "#cccccc"
+    selected_item_color = "#ffffff"
+    item_height = 30
+    item_padding = 15
+    item_spacing = 10
+    
+    selected_item_pixmap_style = "select_*.png"
+}
+
+# Progress bar (shown during boot)
++ progress_bar {
+    id = "__timeout__"
+    left = 25%
+    top = 82%
+    width = 50%
+    height = 20
+    
+    fg_color = "#00ff00"
+    bg_color = "#666666"
+    border_color = "#ffffff"
+    
+    text = ""
+    font = "Unifont Regular 16"
+}
+
+# Label for progress bar
++ label {
+    top = 84% + 30
+    left = 0
+    width = 100%
+    align = "center"
+    id = "__timeout_label__"
+    text = "Booting AUTODARTS in %d seconds"
+    color = "#cccccc"
+    font = "Unifont Regular 16"
+}
+
+# AUTODARTS logo/title at the top
++ image {
+    top = 10%
+    left = 50% - 128
+    width = 256
+    height = 256
+    file = "autodarts_logo.png"
+}
+
+# Version/branding label
++ label {
+    top = 90%
+    left = 0
+    width = 100%
+    align = "center"
+    text = "AUTODARTS System"
+    color = "#00ff00"
+    font = "Unifont Regular 16"
+}

@@ -75,11 +75,6 @@ fun refresh_callback ()
     # Re-center (keeps it centered if frames vary slightly in size)
     spinner_sprite.SetX(Window.GetWidth() / 2 - current_image.GetWidth() / 2);
     spinner_sprite.SetY(Window.GetHeight() / 2 - current_image.GetHeight() / 2);
-    
-    # Re-position Watermark to stay relative to the spinner
-    # (Only strictly necessary if spinner moves or changes height, but good for safety)
-    watermark_sprite.SetX(Window.GetWidth() / 2 - watermark_image.GetWidth() / 2);
-    watermark_sprite.SetY(spinner_sprite.GetY() - watermark_image.GetHeight() - 20);
   }
 
 # Register the refresh callback to animate the spinner

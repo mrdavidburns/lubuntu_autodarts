@@ -173,8 +173,11 @@ fun display_password_callback (prompt_text, bullet_count)
     if (global.prompt.sprite)
       global.prompt.sprite = null;
     
-    # Display "Enter Password" prompt with white text for visibility
-    global.prompt.image = Image.Text("Enter Password", 1, 1, 1);
+    # Display password prompt text (use provided prompt_text, fall back to default)
+    prompt_label = prompt_text;
+    if (!prompt_label || prompt_label == "")
+      prompt_label = "Enter Password";
+    global.prompt.image = Image.Text(prompt_label, 1, 1, 1);
     global.prompt.sprite = Sprite(global.prompt.image);
     global.prompt.sprite.SetX(screen.half.w - global.prompt.image.GetWidth() / 2);
     global.prompt.sprite.SetY(screen.h - 4 * global.prompt.image.GetHeight());

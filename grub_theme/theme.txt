@@ -42,7 +42,7 @@ terminal-font: "Unifont Regular 16"
 
 # Label for progress bar
 + label {
-    top = 84% + 30
+    top = 87%
     left = 0
     width = 100%
     align = "center"
@@ -55,9 +55,9 @@ terminal-font: "Unifont Regular 16"
 # AUTODARTS logo/title at the top
 + image {
     top = 10%
-    left = 50% - 128
-    width = 256
-    height = 256
+    left = 50% - 100
+    width = 200
+    height = 200
     file = "autodarts_logo.png"
 }
 

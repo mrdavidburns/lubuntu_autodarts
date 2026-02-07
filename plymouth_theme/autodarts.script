@@ -81,5 +81,84 @@ fun refresh_callback ()
     watermark_sprite.SetX(Window.GetWidth() / 2 - watermark_image.GetWidth() / 2);
     watermark_sprite.SetY(spinner_sprite.GetY() - watermark_image.GetHeight() - 20);
   }
-  
+
+# Register the refresh callback to animate the spinner
 Plymouth.SetRefreshFunction (refresh_callback);
+
+# --- Helper Function ---
+# Ensures all sprites remain visible by setting their opacity to 1
+# This is called by all callbacks to prevent black screen gaps
+
+fun ensure_sprites_visible ()
+  {
+    spinner_sprite.SetOpacity(1);
+    watermark_sprite.SetOpacity(1);
+  }
+
+# --- Display Mode Callbacks ---
+# These callbacks are triggered when Plymouth changes display modes
+# They ensure the splash screen remains visible during all boot phases
+
+fun display_normal_callback ()
+  {
+    # Called when Plymouth enters normal display mode (boot/shutdown)
+    ensure_sprites_visible();
+  }
+
+fun display_password_callback (prompt, bullets)
+  {
+    # Called when a password prompt is shown
+    # Keep the splash screen visible behind the prompt
+    ensure_sprites_visible();
+  }
+
+fun display_question_callback (prompt, entry)
+  {
+    # Called when a question is displayed
+    ensure_sprites_visible();
+  }
+
+fun display_message_callback (text)
+  {
+    # Called when a message needs to be displayed
+    ensure_sprites_visible();
+  }
+
+# Register display mode callbacks
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+Plymouth.SetDisplayQuestionFunction(display_question_callback);
+Plymouth.SetDisplayMessageFunction(display_message_callback);
+
+# --- Boot/Shutdown Message Handler ---
+# This handles boot progress messages and ensures visibility throughout
+
+fun message_callback (text)
+  {
+    # This is called for various boot/shutdown messages
+    ensure_sprites_visible();
+  }
+
+Plymouth.SetMessageFunction(message_callback);
+
+# --- Shutdown/Quit Handler ---
+# Called when Plymouth is about to quit
+
+fun quit_callback ()
+  {
+    # Keep splash visible until the very end
+    ensure_sprites_visible();
+  }
+
+Plymouth.SetQuitFunction(quit_callback);
+
+# --- Boot Progress Handler ---
+# Called during boot to report progress
+
+fun boot_progress_callback (duration, progress)
+  {
+    # Keep sprites visible during boot progress updates
+    ensure_sprites_visible();
+  }
+
+Plymouth.SetBootProgressFunction(boot_progress_callback);

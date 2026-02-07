@@ -130,9 +130,9 @@ fun display_normal_callback ()
     # Clear all password/question elements
     if (global.bullets)
       {
-        for (i = 0; bullets[i]; i++)
+        for (i = 0; global.bullets[i]; i++)
           {
-            bullets[i].sprite = null;
+            global.bullets[i].sprite = null;
           }
         global.bullets = null;
       }
@@ -164,9 +164,9 @@ fun display_password_callback (prompt_text, bullet_count)
     # Clear previous password display
     if (global.bullets)
       {
-        for (i = 0; bullets[i]; i++)
+        for (i = 0; global.bullets[i]; i++)
           {
-            bullets[i].sprite = null;
+            global.bullets[i].sprite = null;
           }
       }
     

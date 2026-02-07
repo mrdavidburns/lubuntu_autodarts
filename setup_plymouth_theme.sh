@@ -121,8 +121,8 @@ if [ -f "$MODULES_FILE" ]; then
     add_module "drm_kms_helper"
     add_module "drm"
 
-    echo "Updating initramfs (this may take a moment)..."
-    sudo update-initramfs -u
+    echo "Updating initramfs for all kernels (this may take a moment)..."
+    sudo update-initramfs -u -k all
 else
     echo "Warning: $MODULES_FILE not found. Skipping Initramfs module configuration."
 fi

@@ -58,7 +58,7 @@ The setup script will:
 
 1. **Install Google Chrome** - Downloads and installs the latest stable version
 2. **Install AutoDarts** - Uses the official AutoDarts installer
-3. **Configure Autostart** - Sets Chrome to launch fullscreen on login
+3. **Configure Autostart** - Sets Chrome to launch fullscreen on login (user-specific, no sudo required)
 4. **Install System Tools** - Adds fastfetch and btop for system monitoring
 5. **Apply Desktop Customizations**:
    - Sets AutoDarts wallpaper
@@ -162,6 +162,12 @@ Total boot time: ~15-20 seconds on modern hardware with SSD.
 - Check the autostart file exists: `cat ~/.config/autostart/google-chrome-fullscreen.desktop`
 - Log out and log back in
 - Verify Chrome is installed: `which google-chrome-stable`
+
+**Note**: Chrome autostart is configured per-user in `~/.config/autostart/`, not system-wide. This means:
+- No sudo privileges required for setup
+- Configuration affects only the current user
+- Easy to modify or remove without affecting other users
+- Follows LXQt best practices
 
 ### Panel customizations not applied
 - The script requires an existing `~/.config/lxqt/panel.conf` file

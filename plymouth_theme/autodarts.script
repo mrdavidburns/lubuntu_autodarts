@@ -6,6 +6,13 @@
 Window.SetBackgroundTopColor(0.208, 0.337, 0.592);
 Window.SetBackgroundBottomColor(0.188, 0.165, 0.388);
 
+# --- Screen Dimension Variables ---
+# Used for easier positioning of elements
+screen.w = Window.GetWidth();
+screen.h = Window.GetHeight();
+screen.half.w = Window.GetWidth() / 2;
+screen.half.h = Window.GetHeight() / 2;
+
 # --- Animation Configuration ---
 # IMPORTANT: You must extract the GIF frames to PNG files first!
 # Example: ffmpeg -i autodarts_spinner.gif frame_%02d.png
@@ -13,6 +20,10 @@ Window.SetBackgroundBottomColor(0.188, 0.165, 0.388);
 
 # Set this to the actual number of frames you have
 total_frames = 12;
+
+# --- State Management ---
+# Controls animation during password entry
+state.status = "play";
 
 # Image file settings
 frame_dir = "spinner/";
@@ -31,10 +42,8 @@ spinner_sprite.SetOpacity(1);
 spinner_sprite.SetZ(10000);
 
 # Initial centering
-screen_width = Window.GetWidth();
-screen_height = Window.GetHeight();
-spinner_sprite.SetX(screen_width / 2 - animation_images[1].GetWidth() / 2);
-spinner_sprite.SetY(screen_height / 2 - animation_images[1].GetHeight() / 2);
+spinner_sprite.SetX(screen.half.w - animation_images[1].GetWidth() / 2);
+spinner_sprite.SetY(screen.half.h - animation_images[1].GetHeight() / 2);
 
 # --- Watermark Setup (Immediate Display) ---
 watermark_image = Image("powered_by_autodarts.png");
@@ -43,8 +52,12 @@ watermark_sprite.SetOpacity(1);
 watermark_sprite.SetZ(10000);
 
 # Position Watermark relative to Spinner (Above, per original logic)
-watermark_sprite.SetX(screen_width / 2 - watermark_image.GetWidth() / 2);
+watermark_sprite.SetX(screen.half.w - watermark_image.GetWidth() / 2);
 watermark_sprite.SetY(spinner_sprite.GetY() - watermark_image.GetHeight() - 20);
+
+# --- Password Bullet Setup ---
+# Create bullet image for password entry display
+bullet.image = Image.Text("●", 1, 1, 1);  # White bullet character
 
 # --- Load Remaining Animation Frames ---
 # Now that first frame is displayed, load the rest of the animation
@@ -65,20 +78,24 @@ progress = 1;
 
 fun refresh_callback ()
   {
-    # Advance the frame counter
-    progress++;
-    
-    # Loop back to 1 if we exceed total frames
-    if (progress > total_frames)
-      progress = 1;
-      
-    # Update the sprite image
-    current_image = animation_images[progress];
-    spinner_sprite.SetImage(current_image);
-    
-    # Re-center (keeps it centered if frames vary slightly in size)
-    spinner_sprite.SetX(Window.GetWidth() / 2 - current_image.GetWidth() / 2);
-    spinner_sprite.SetY(Window.GetHeight() / 2 - current_image.GetHeight() / 2);
+    # Only animate if not paused (e.g., during password entry)
+    if (state.status == "play")
+      {
+        # Advance the frame counter
+        progress++;
+        
+        # Loop back to 1 if we exceed total frames
+        if (progress > total_frames)
+          progress = 1;
+          
+        # Update the sprite image
+        current_image = animation_images[progress];
+        spinner_sprite.SetImage(current_image);
+        
+        # Re-center (keeps it centered if frames vary slightly in size)
+        spinner_sprite.SetX(screen.half.w - current_image.GetWidth() / 2);
+        spinner_sprite.SetY(screen.half.h - current_image.GetHeight() / 2);
+      }
     
     # Ensure sprites remain visible (following reference implementation pattern)
     # This is critical for early boot display
@@ -103,31 +120,136 @@ fun ensure_sprites_visible ()
 
 # --- Display Mode Callbacks ---
 # These callbacks are triggered when Plymouth changes display modes
-# They ensure the splash screen remains visible during all boot phases
 
 fun display_normal_callback ()
   {
     # Called when Plymouth enters normal display mode (boot/shutdown)
+    # Resume animation
+    state.status = "play";
+    
+    # Clear all password/question elements
+    if (global.bullets)
+      {
+        for (i = 0; global.bullets[i]; i++)
+          {
+            global.bullets[i].sprite = null;
+          }
+        global.bullets = null;
+      }
+    
+    if (global.prompt.sprite)
+      global.prompt.sprite = null;
+    
+    if (global.message.sprite)
+      global.message.sprite = null;
+    
+    if (global.question.sprite)
+      global.question.sprite = null;
+    
+    if (global.answer.sprite)
+      global.answer.sprite = null;
+    
+    # Keep the splash screen visible
     ensure_sprites_visible();
   }
 
-fun display_password_callback (prompt, bullets)
+fun display_password_callback (prompt_text, bullet_count)
   {
-    # Called when a password prompt is shown
-    # Keep the splash screen visible behind the prompt
+    # Pause animation during password entry
+    state.status = "pause";
+    
+    # Keep splash screen visible
     ensure_sprites_visible();
+    
+    # Clear previous password display
+    if (global.bullets)
+      {
+        for (i = 0; global.bullets[i]; i++)
+          {
+            global.bullets[i].sprite = null;
+          }
+      }
+    
+    if (global.prompt.sprite)
+      global.prompt.sprite = null;
+    
+    # Display password prompt text (use provided prompt_text, fall back to default)
+    prompt_label = prompt_text;
+    if (!prompt_label || prompt_label == "")
+      prompt_label = "Enter Password";
+    global.prompt.image = Image.Text(prompt_label, 1, 1, 1);
+    global.prompt.sprite = Sprite(global.prompt.image);
+    global.prompt.sprite.SetX(screen.half.w - global.prompt.image.GetWidth() / 2);
+    global.prompt.sprite.SetY(screen.h - 4 * global.prompt.image.GetHeight());
+    global.prompt.sprite.SetZ(10000);
+    
+    # Display password bullets
+    if (bullet_count > 0)
+      {
+        # Calculate total width and starting position for centering
+        total_width = bullet_count * bullet.image.GetWidth();
+        start_pos = screen.half.w - total_width / 2;
+        
+        global.bullets = null;
+        for (i = 0; i < bullet_count; i++)
+          {
+            global.bullets[i].sprite = Sprite(bullet.image);
+            global.bullets[i].sprite.SetX(start_pos + i * bullet.image.GetWidth());
+            global.bullets[i].sprite.SetY(screen.h - 2 * bullet.image.GetHeight());
+            global.bullets[i].sprite.SetZ(10000);
+          }
+      }
   }
 
-fun display_question_callback (prompt, entry)
+fun display_question_callback (prompt_text, entry_text)
   {
-    # Called when a question is displayed
+    # Pause animation during question entry
+    state.status = "pause";
+    
+    # Keep splash screen visible
     ensure_sprites_visible();
+    
+    # Clear previous question display
+    if (global.question.sprite)
+      global.question.sprite = null;
+    
+    if (global.answer.sprite)
+      global.answer.sprite = null;
+    
+    # Use default text if entry is empty
+    if (entry_text == "")
+      entry_text = "<answer>";
+    
+    # Display question prompt with white text
+    global.question.image = Image.Text(prompt_text, 1, 1, 1);
+    global.question.sprite = Sprite(global.question.image);
+    global.question.sprite.SetX(screen.half.w - global.question.image.GetWidth() / 2);
+    global.question.sprite.SetY(screen.h - 4 * global.question.image.GetHeight());
+    global.question.sprite.SetZ(10000);
+    
+    # Display answer with white text
+    global.answer.image = Image.Text(entry_text, 1, 1, 1);
+    global.answer.sprite = Sprite(global.answer.image);
+    global.answer.sprite.SetX(screen.half.w - global.answer.image.GetWidth() / 2);
+    global.answer.sprite.SetY(screen.h - 2 * global.answer.image.GetHeight());
+    global.answer.sprite.SetZ(10000);
   }
 
 fun display_message_callback (text)
   {
-    # Called when a message needs to be displayed
+    # Keep splash screen visible
     ensure_sprites_visible();
+    
+    # Clear previous message
+    if (global.message.sprite)
+      global.message.sprite = null;
+    
+    # Display message with white text at top of screen
+    global.message.image = Image.Text(text, 1, 1, 1);
+    global.message.sprite = Sprite(global.message.image);
+    global.message.sprite.SetX(screen.half.w - global.message.image.GetWidth() / 2);
+    global.message.sprite.SetY(global.message.image.GetHeight());
+    global.message.sprite.SetZ(10000);
   }
 
 # Register display mode callbacks

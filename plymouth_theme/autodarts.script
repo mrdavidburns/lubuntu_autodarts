@@ -50,7 +50,7 @@ watermark_sprite.SetY(spinner_sprite.GetY() - watermark_image.GetHeight() - 20);
 # Now that first frame is displayed, load the rest of the animation
 for (i = 2; i <= total_frames; i++)
   {
-    # Generate frame number with 2-digit zero padding (e.g., 02, 03, ... 12)
+    # Generate frame number with 2-digit zero padding (e.g., 02, 03, ... up to total_frames)
     if (i < 10)
       frame_num = "0" + i;
     else

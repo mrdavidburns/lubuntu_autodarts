@@ -75,6 +75,13 @@ fun refresh_callback ()
     # Re-center (keeps it centered if frames vary slightly in size)
     spinner_sprite.SetX(Window.GetWidth() / 2 - current_image.GetWidth() / 2);
     spinner_sprite.SetY(Window.GetHeight() / 2 - current_image.GetHeight() / 2);
+    
+    # Ensure sprites remain visible (following reference implementation pattern)
+    # This is critical for early boot display
+    spinner_sprite.SetOpacity(1);
+    spinner_sprite.SetZ(10000);
+    watermark_sprite.SetOpacity(1);
+    watermark_sprite.SetZ(10000);
   }
 
 # Register the refresh callback to animate the spinner

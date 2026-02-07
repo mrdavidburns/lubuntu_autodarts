@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=AutoDarts
+Description=AutoDarts Boot Theme
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/autodarts
+ScriptFile=/usr/share/plymouth/themes/autodarts/autodarts.script

@@ -1,0 +1,85 @@
+# Plymouth Script for AutoDarts Animation
+
+# Radial gradient approximation (Native radial not supported in script)
+# Center (Top): R:53 G:86 B:151 -> 0.208, 0.337, 0.592
+# Outer (Bottom): R:48 G:42 B:99 -> 0.188, 0.165, 0.388
+Window.SetBackgroundTopColor(0.208, 0.337, 0.592);
+Window.SetBackgroundBottomColor(0.188, 0.165, 0.388);
+
+# --- Animation Configuration ---
+# IMPORTANT: You must extract the GIF frames to PNG files first!
+# Example: ffmpeg -i autodarts_spinner.gif frame_%02d.png
+# Place them in the 'spinner' directory named 'autodarts_spinner_01.png', etc.
+
+# Set this to the actual number of frames you have
+total_frames = 12;
+
+# Image file settings
+frame_dir = "spinner/";
+frame_prefix = "autodarts_spinner_";
+frame_suffix = ".png";
+
+# Load animation frames into an array
+for (i = 1; i <= total_frames; i++)
+  {
+    # Generate frame number with 2-digit zero padding (e.g., 01, 02, ... 50)
+    if (i < 10)
+      frame_num = "0" + i;
+    else
+      frame_num = i;
+      
+    # Construct filename: spinner/autodarts_spinner_01.png
+    animation_images[i] = Image(frame_dir + frame_prefix + frame_num + frame_suffix);
+  }
+
+# --- Sprite Setup ---
+spinner_sprite = Sprite();
+# Initialize with the first frame
+spinner_sprite.SetImage(animation_images[1]);
+spinner_sprite.SetOpacity(1);
+spinner_sprite.SetZ(10000);
+
+# Initial centering
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+spinner_sprite.SetX(screen_width / 2 - animation_images[1].GetWidth() / 2);
+spinner_sprite.SetY(screen_height / 2 - animation_images[1].GetHeight() / 2);
+
+# --- Watermark Setup ---
+# Kept as per original script
+watermark_image = Image("powered_by_autodarts.png");
+watermark_sprite = Sprite(watermark_image);
+watermark_sprite.SetOpacity(1);
+watermark_sprite.SetZ(10000);
+
+# Position Watermark relative to Spinner (Above, per original logic)
+watermark_sprite.SetX(screen_width / 2 - watermark_image.GetWidth() / 2);
+watermark_sprite.SetY(spinner_sprite.GetY() - watermark_image.GetHeight() - 20);
+
+# --- Animation Loop ---
+progress = 1;
+
+fun refresh_callback ()
+  {
+    # Advance the frame counter
+    progress++;
+    
+    # Loop back to 1 if we exceed total frames
+    if (progress > total_frames)
+      progress = 1;
+      
+    # Update the sprite image
+    current_image = animation_images[progress];
+    spinner_sprite.SetImage(current_image);
+    
+    # Re-center (keeps it centered if frames vary slightly in size)
+    spinner_sprite.SetX(Window.GetWidth() / 2 - current_image.GetWidth() / 2);
+    spinner_sprite.SetY(Window.GetHeight() / 2 - current_image.GetHeight() / 2);
+    
+    # Re-position Watermark to stay relative to the spinner
+    # (Only strictly necessary if spinner moves or changes height, but good for safety)
+    watermark_sprite.SetX(Window.GetWidth() / 2 - watermark_image.GetWidth() / 2);
+    watermark_sprite.SetY(spinner_sprite.GetY() - watermark_image.GetHeight() - 20);
+  }
+  
+Plymouth.SetRefreshFunction (refresh_callback);

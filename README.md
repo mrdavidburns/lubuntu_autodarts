@@ -10,6 +10,7 @@ This repository provides a complete setup solution for turning a fresh Lubuntu i
 
 - **AutoDarts Installation**: Automatically installs the latest AutoDarts software
 - **Google Chrome Auto-launch**: Configures Chrome to start in fullscreen mode on boot
+- **SUIT Toolkit**: Installs the Simple UI Toolkit for easy AutoDarts management and system configuration
 - **Complete Boot Branding**: AUTODARTS branding throughout the entire boot process
   - **GRUB Theme**: Custom bootloader menu with AUTODARTS logo and branding
   - **Plymouth Boot Theme**: Animated boot splash screen with AUTODARTS logo and spinner
@@ -60,13 +61,14 @@ The setup script will:
 2. **Install AutoDarts** - Uses the official AutoDarts installer
 3. **Configure Autostart** - Sets Chrome to launch fullscreen on login (user-specific, no sudo required)
 4. **Install System Tools** - Adds fastfetch and btop for system monitoring
-5. **Apply Desktop Customizations**:
+5. **Install SUIT** - Installs the Simple UI Toolkit for managing AutoDarts and system settings
+6. **Apply Desktop Customizations**:
    - Sets AutoDarts wallpaper
    - Customizes LXQt panel with AutoDarts branding
    - Adds Chrome and QTerminal to quick launch
    - Enables panel auto-hide
-6. **Install GRUB Theme** - Custom bootloader menu with AUTODARTS branding
-7. **Install Plymouth Theme** - Custom boot splash with AutoDarts branding
+7. **Install GRUB Theme** - Custom bootloader menu with AUTODARTS branding
+8. **Install Plymouth Theme** - Custom boot splash with AutoDarts branding
    - Automatically installs `plymouth-themes` package if needed
    - Configures theme files and animations
    - Verifies installation and theme selection
@@ -202,4 +204,5 @@ This is a personal setup repository. Feel free to use and modify for your own Au
 ## Credits
 
 - AutoDarts: https://autodarts.io
+- SUIT (Simple UI Toolkit) by IteraThor: https://github.com/IteraThor/SUIT
 - Plymouth theme based on script-based Plymouth themes

@@ -40,7 +40,9 @@ sudo apt install -y python3-tk python3-dbus python3-pip python3-venv git
 SUIT_DIR="$HOME/SUIT"
 if [ -d "$SUIT_DIR" ]; then
     echo "SUIT directory already exists, updating..."
-    cd "$SUIT_DIR" && git pull
+    cd "$SUIT_DIR" && git pull || {
+        echo "Warning: Failed to update SUIT repository."
+    }
 else
     git clone https://github.com/IteraThor/SUIT.git "$SUIT_DIR" || {
         echo "Warning: Failed to clone SUIT repository."
@@ -49,8 +51,7 @@ fi
 
 # Create desktop launcher if SUIT was cloned successfully
 if [ -d "$SUIT_DIR" ]; then
-    cd "$SUIT_DIR"
-    python3 create_launcher.py || {
+    cd "$SUIT_DIR" && python3 create_launcher.py || {
         echo "Warning: Failed to create SUIT desktop launcher."
     }
     echo "SUIT installation complete. Launcher created on Desktop."

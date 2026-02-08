@@ -1,4 +1,6 @@
 #!/bin/bash
+# Part of lubuntu_autodarts - MIT License
+# See LICENSE file for details
 
 # Define paths
 THEME_DIR="/usr/share/plymouth/themes/autodarts"

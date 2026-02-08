@@ -1,4 +1,6 @@
 #!/bin/bash
+# Part of lubuntu_autodarts - MIT License
+# See LICENSE file for details
 
 # Update package list and install prerequisites
 sudo apt update

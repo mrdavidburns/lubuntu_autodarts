@@ -201,18 +201,17 @@ Total boot time: ~15-20 seconds on modern hardware with SSD.
 
 ## Attribution
 
-This repository provides automated setup scripts for **[AutoDarts](https://autodarts.io)**, an innovative automatic darts scoring system. AutoDarts transforms your dartboard into a smart, connected scoring system.
-
 This is an **unofficial** community-contributed setup repository to simplify Lubuntu installation and configuration for dedicated AutoDarts systems. It is not officially affiliated with or endorsed by AutoDarts.
 
+This repository provides automated setup scripts for **[AutoDarts](https://autodarts.io)**, an innovative automatic darts scoring system. AutoDarts transforms your dartboard into a smart, connected scoring system.
+
 Visit [autodarts.io](https://autodarts.io) to learn more about the AutoDarts project.
+- **[AutoDarts](https://autodarts.io)** - Automatic darts scoring system
+- **[SUIT (Simple UI Toolkit)](https://github.com/IteraThor/SUIT)** by IteraThor - UI management toolkit for AutoDarts
+- Plymouth theme based on script-based Plymouth themes
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Credits
 
-- **[AutoDarts](https://autodarts.io)** - Automatic darts scoring system
-- **[SUIT (Simple UI Toolkit)](https://github.com/IteraThor/SUIT)** by IteraThor - UI management toolkit for AutoDarts
-- Plymouth theme based on script-based Plymouth themes

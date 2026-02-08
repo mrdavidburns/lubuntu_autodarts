@@ -1,5 +1,7 @@
 # Lubuntu AutoDarts Setup
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Automated setup scripts for configuring a Lubuntu installation as a dedicated AutoDarts system with custom branding and boot experience.
 
 ## Purpose
@@ -195,11 +197,14 @@ Total boot time: ~15-20 seconds on modern hardware with SSD.
 - Active internet connection during setup
 - Sudo/root access
 
+## Attribution
+
+This repository provides automated setup scripts for **[AutoDarts](https://autodarts.io)**, an innovative automatic darts scoring system. AutoDarts transforms your dartboard into a smart, connected scoring system.
+
+This is an **unofficial** community-contributed setup repository to simplify Lubuntu installation and configuration for dedicated AutoDarts systems. It is not officially affiliated with or endorsed by AutoDarts.
+
+Visit [autodarts.io](https://autodarts.io) to learn more about the AutoDarts project.
+
 ## License
 
-This is a personal setup repository. Feel free to use and modify for your own AutoDarts installations.
-
-## Credits
-
-- AutoDarts: https://autodarts.io
-- Plymouth theme based on script-based Plymouth themes
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

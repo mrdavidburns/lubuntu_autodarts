@@ -1,4 +1,6 @@
 #!/bin/bash
+# Part of lubuntu_autodarts - MIT License
+# See LICENSE file for details
 
 # Script to install AUTODARTS GRUB theme
 # Adds branded boot menu to GRUB bootloader

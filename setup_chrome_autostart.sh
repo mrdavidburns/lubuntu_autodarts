@@ -1,4 +1,6 @@
 #!/bin/bash
+# Part of lubuntu_autodarts - MIT License
+# See LICENSE file for details
 
 # Configure Google Chrome to launch fullscreen on user login
 # Uses LXQt user-specific autostart directory (~/.config/autostart/)

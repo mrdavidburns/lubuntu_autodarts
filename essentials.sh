@@ -32,7 +32,36 @@ sudo add-apt-repository ppa:zhangsongcui3371/fastfetch -y
 sudo apt update
 sudo apt install -y fastfetch btop
 
-# 5. Desktop Customization
+# 5. Install SUIT (Simple UI Toolkit)
+echo "Installing SUIT (Simple UI Toolkit)..."
+
+# Install system dependencies for SUIT
+sudo apt install -y python3-tk python3-dbus python3-pip python3-venv git
+
+# Clone SUIT repository to user's home directory
+SUIT_DIR="$HOME/SUIT"
+if [ -d "$SUIT_DIR" ]; then
+    echo "SUIT directory already exists, updating..."
+    cd "$SUIT_DIR" && git pull || {
+        echo "Warning: Failed to update SUIT repository."
+    }
+else
+    git clone https://github.com/IteraThor/SUIT.git "$SUIT_DIR" || {
+        echo "Warning: Failed to clone SUIT repository."
+    }
+fi
+
+# Create desktop launcher if SUIT was cloned successfully
+if [ -d "$SUIT_DIR" ]; then
+    cd "$SUIT_DIR" && python3 create_launcher.py || {
+        echo "Warning: Failed to create SUIT desktop launcher."
+    }
+    echo "SUIT installation complete. Launcher created on Desktop."
+else
+    echo "Warning: SUIT directory not found, skipping launcher creation."
+fi
+
+# 6. Desktop Customization
 echo "Applying desktop customizations..."
 
 # Set Wallpaper
@@ -78,11 +107,11 @@ else
     echo "Warning: LXQt panel config not found. Panel customizations not applied."
 fi
 
-# 6. Install GRUB Theme
+# 7. Install GRUB Theme
 echo "Setting up GRUB Theme for boot menu branding..."
 bash "$(dirname "$0")/setup_grub_theme.sh"
 
-# 7. Install Plymouth Theme
+# 8. Install Plymouth Theme
 echo "Setting up Plymouth Theme and Boot Options..."
 bash "$(dirname "$0")/setup_plymouth_theme.sh"
 

@@ -2,6 +2,10 @@
 # Part of lubuntu_autodarts - MIT License
 # See LICENSE file for details
 
+# Determine actual user and home directory (handles sudo usage)
+ACTUAL_USER=${SUDO_USER:-$USER}
+ACTUAL_HOME=$(eval echo ~"$ACTUAL_USER")
+
 # Update package list and install prerequisites
 sudo apt update
 sudo apt install -y curl wget software-properties-common
@@ -21,10 +25,10 @@ bash <(curl -sL get.autodarts.io)
 # 3. Configure LXQt Autostart to open Chrome fullscreen
 echo "Configuring LXQt Autostart..."
 # Ensure the autostart directory exists
-mkdir -p ~/.config/autostart
+mkdir -p "$ACTUAL_HOME/.config/autostart"
 
 # Create the .desktop file by calling the external script
-bash "$(dirname "$0")/setup_chrome_autostart.sh"
+HOME="$ACTUAL_HOME" bash "$(dirname "$0")/setup_chrome_autostart.sh"
 
 # 4. Install System Tools (fastfetch, btop)
 echo "Installing fastfetch and btop..."
@@ -36,10 +40,10 @@ sudo apt install -y fastfetch btop
 echo "Installing SUIT (Simple UI Toolkit)..."
 
 # Install system dependencies for SUIT
-sudo apt install -y python3-tk python3-dbus python3-pip python3-venv git
+sudo apt install -y python3-tk python3-dbus python3-pip python3-venv git libdbus-1-dev
 
 # Clone SUIT repository to user's home directory
-SUIT_DIR="$HOME/SUIT"
+SUIT_DIR="$ACTUAL_HOME/SUIT"
 if [ -d "$SUIT_DIR" ]; then
     echo "SUIT directory already exists, updating..."
     cd "$SUIT_DIR" && git pull || {
@@ -66,53 +70,62 @@ echo "Applying desktop customizations..."
 
 # Set Wallpaper
 # Copy the wallpaper image from the script's directory to the Pictures folder
-mkdir -p ~/Pictures
+mkdir -p "$ACTUAL_HOME/Pictures"
 if [ -f "$(dirname "$0")/images/four-darts-desktop-wallpaper.webp" ]; then
-    cp "$(dirname "$0")/images/four-darts-desktop-wallpaper.webp" ~/Pictures/
+    cp "$(dirname "$0")/images/four-darts-desktop-wallpaper.webp" "$ACTUAL_HOME/Pictures/"
     # Apply the wallpaper
-    pcmanfm-qt --set-wallpaper="$HOME/Pictures/four-darts-desktop-wallpaper.webp" --wallpaper-mode=stretch
+    pcmanfm-qt --set-wallpaper="$ACTUAL_HOME/Pictures/four-darts-desktop-wallpaper.webp" --wallpaper-mode=stretch
 else
     echo "Warning: Wallpaper file not found in images directory."
 fi
 
 # Configure LXQt Panel (Auto-hide, Icon, Text)
-mkdir -p ~/.local/share/icons
+mkdir -p "$ACTUAL_HOME/.local/share/icons"
 if [ -f "$(dirname "$0")/images/autodarts_logo.png" ]; then
-    cp "$(dirname "$0")/images/autodarts_logo.png" ~/.local/share/icons/
+    cp "$(dirname "$0")/images/autodarts_logo.png" "$ACTUAL_HOME/.local/share/icons/"
 else
     echo "Warning: autodarts_logo.png not found in images directory."
 fi
 
 # Modifies the panel configuration
-if [ -f ~/.config/lxqt/panel.conf ]; then
+if [ -f "$ACTUAL_HOME/.config/lxqt/panel.conf" ]; then
     # Create backup just in case
-    cp ~/.config/lxqt/panel.conf ~/.config/lxqt/panel.conf.bak
+    cp "$ACTUAL_HOME/.config/lxqt/panel.conf" "$ACTUAL_HOME/.config/lxqt/panel.conf.bak"
     
     # Enable auto-hide
-    sed -i 's/hidable=false/hidable=true/g' ~/.config/lxqt/panel.conf
+    sed -i 's/hidable=false/hidable=true/g' "$ACTUAL_HOME/.config/lxqt/panel.conf"
     
     # Set Start Menu Icon and Text
-    LOGO_PATH="$HOME/.local/share/icons/autodarts_logo.png"
+    LOGO_PATH="$ACTUAL_HOME/.local/share/icons/autodarts_logo.png"
     # Escape slashes for sed
     ESCAPED_LOGO_PATH=$(echo "$LOGO_PATH" | sed 's/\//\\\//g')
     
     # Update icon in [mainmenu] section
-    sed -i "/^\[mainmenu\]/,/^\[/ s/^icon=.*/icon=$ESCAPED_LOGO_PATH/" ~/.config/lxqt/panel.conf
+    sed -i "/^\[mainmenu\]/,/^\[/ s/^icon=.*/icon=$ESCAPED_LOGO_PATH/" "$ACTUAL_HOME/.config/lxqt/panel.conf"
     # Update title in [mainmenu] section
-    sed -i "/^\[mainmenu\]/,/^\[/ s/^title=.*/title=AutoDarts/" ~/.config/lxqt/panel.conf
+    sed -i "/^\[mainmenu\]/,/^\[/ s/^title=.*/title=AutoDarts/" "$ACTUAL_HOME/.config/lxqt/panel.conf"
 
     # Add Google Chrome and QTerminal to Quick Launch
-    python3 "$(dirname "$0")/update_quick_launch.py"
+    # HOME is set so os.path.expanduser resolves to the actual user's config
+    HOME="$ACTUAL_HOME" python3 "$(dirname "$0")/update_quick_launch.py"
 else
     echo "Warning: LXQt panel config not found. Panel customizations not applied."
 fi
 
 # 7. Install GRUB Theme
 echo "Setting up GRUB Theme for boot menu branding..."
-bash "$(dirname "$0")/setup_grub_theme.sh"
+if [ -f "$(dirname "$0")/setup_grub_theme.sh" ]; then
+    bash "$(dirname "$0")/setup_grub_theme.sh"
+else
+    echo "Warning: setup_grub_theme.sh not found, skipping GRUB theme setup."
+fi
 
 # 8. Install Plymouth Theme
 echo "Setting up Plymouth Theme and Boot Options..."
-bash "$(dirname "$0")/setup_plymouth_theme.sh"
+if [ -f "$(dirname "$0")/setup_plymouth_theme.sh" ]; then
+    bash "$(dirname "$0")/setup_plymouth_theme.sh"
+else
+    echo "Warning: setup_plymouth_theme.sh not found, skipping Plymouth theme setup."
+fi
 
 echo "Installation and configuration complete."

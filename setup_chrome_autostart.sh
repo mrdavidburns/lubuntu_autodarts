@@ -10,11 +10,14 @@
 #   - Follows LXQt best practices
 #   - Is easy to modify or remove
 
+# Determine actual user home directory (handles sudo usage)
+ACTUAL_HOME=$(eval echo ~"${SUDO_USER:-$USER}")
+
 # Ensure the autostart directory exists
-mkdir -p ~/.config/autostart
+mkdir -p "$ACTUAL_HOME/.config/autostart"
 
 # Create the .desktop file
-cat <<EOF > ~/.config/autostart/google-chrome-fullscreen.desktop
+cat <<EOF > "$ACTUAL_HOME/.config/autostart/google-chrome-fullscreen.desktop"
 [Desktop Entry]
 Type=Application
 Name=Google Chrome Fullscreen

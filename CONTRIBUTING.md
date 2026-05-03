@@ -33,9 +33,16 @@ CI runs all of the above on push and PR.
 - Use `ad_atomic_write` for any file in `/etc/`.
 - Use `ad_apt` (not raw `apt`) so we wait for the dpkg lock and retry.
 - Resolve user homes with `getent passwd | cut -d: -f6`, not `eval echo ~`.
+- Derive the kiosk user via `${SUDO_USER:-${USER:-$(id -un)}}` so
+  scripts work under `set -u` even when neither env var is set
+  (CI containers, cron contexts).
+- Gate `systemctl daemon-reload` / `systemctl enable --now` behind
+  `[ -d /run/systemd/system ]` so smoke containers can run installer
+  scripts without a real init.
 - All new scripts must be idempotent — the self-update cron reruns
   `essentials.sh` weekly.
 - Prefer systemd timers over `/etc/cron.d/`.
+- Format with `shfmt -w -i 4 -ci -bn`. CI fails on diff.
 
 ## Commit style
 

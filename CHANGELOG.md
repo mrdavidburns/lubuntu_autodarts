@@ -14,6 +14,31 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
   `motd-news`, and `apt-daily*` timers (kiosk doesn't need them).
   Wired into `essentials.sh` after the Plymouth step.
 
+### Fixed
+- CI smoke build no longer references nonexistent `logger` package
+  (the binary ships in `bsdutils`); add `iproute2` so
+  `autodarts-status` can read interfaces.
+- Drop `ENTRYPOINT ["/bin/bash","-l"]` from `tests/Dockerfile.smoke`
+  so `docker run … bash -c "…"` from CI doesn't try to exec the literal
+  `bash` arg as a script (was producing
+  `cannot execute binary file` exit 126).
+- All scripts that derive the kiosk user now use the
+  `${SUDO_USER:-${USER:-$(id -un)}}` pattern. Earlier
+  `${SUDO_USER:-$USER}` tripped `set -u` in containers where neither
+  `$SUDO_USER` nor `$USER` is set.
+- `lib/common.sh` `ad_actual_user` falls back to `id -un` when both
+  env vars are empty.
+- `setup_backup.sh` / `setup_repo_autoupdate.sh` only call
+  `systemctl daemon-reload` + `enable --now` when
+  `/run/systemd/system` exists, so smoke containers without
+  systemd-init don't fail.
+- `bin/autodarts-status` resolves `USER_HOME` via `getent passwd`
+  (replaces `eval echo ~user`), with `$HOME` fallback.
+
+### Changed
+- `shfmt -i 4 -ci -bn` is now the canonical formatter; all shell
+  files reformatted accordingly. CI fails the lint job on diff.
+
 ## [2.0.0] - 2026-05-03
 ### Added
 - One-line bootstrap (`install.sh`).

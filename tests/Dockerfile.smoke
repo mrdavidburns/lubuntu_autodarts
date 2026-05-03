@@ -13,4 +13,4 @@ RUN useradd -m -G sudo,audio,video kiosk \
     && echo "kiosk ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/00-kiosk
 
 WORKDIR /repo
-ENTRYPOINT ["/bin/bash", "-l"]
+# No ENTRYPOINT — `docker run image bash -c "..."` from CI must work.

@@ -204,6 +204,10 @@ ad_step "Install GRUB theme" bash "$SCRIPT_DIR/setup_grub_theme.sh"
 # 18. Plymouth theme (boot + shutdown)
 ad_step "Install Plymouth theme" bash "$SCRIPT_DIR/setup_plymouth_theme.sh"
 
+# 19. Boot/shutdown speed tuning (must run after Plymouth so it can
+# merge into the GRUB cmdline Plymouth set up).
+ad_step "Tune boot/shutdown speed" bash "$SCRIPT_DIR/setup_boot_speed.sh"
+
 # Final verification + summary
 ad_verify
 

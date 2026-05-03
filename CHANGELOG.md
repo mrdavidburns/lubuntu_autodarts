@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `setup_boot_speed.sh`: zero GRUB timeout (hidden), kernel cmdline
+  tuning (`vt.global_cursor_default=0 logo.nologo udev.log_level=3
+  i915.fastboot=1 fbcon=nodefer`), zstd-compressed initramfs,
+  `DefaultTimeoutStopSec=10s` system-wide, `TimeoutStopSec=3` on
+  `autodarts-chrome.service`. Disables `NetworkManager-wait-online`,
+  `motd-news`, and `apt-daily*` timers (kiosk doesn't need them).
+  Wired into `essentials.sh` after the Plymouth step.
 
 ## [2.0.0] - 2026-05-03
 ### Added

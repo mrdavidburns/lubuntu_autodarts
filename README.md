@@ -196,6 +196,20 @@ sudo ./setup_repo_autoupdate.sh
 AD_ENABLE_TAILSCALE=1 TS_AUTHKEY=tskey-... sudo -E ./setup_tailscale.sh
 ```
 
+### Boot/Shutdown Speed Only
+```bash
+sudo ./setup_boot_speed.sh
+# Keep GRUB menu visible:    AD_BOOT_KEEP_GRUB=1 sudo -E ./setup_boot_speed.sh
+# Keep wait-online services: AD_BOOT_KEEP_WAIT_ONLINE=1 sudo -E ./setup_boot_speed.sh
+# Skip zstd initramfs:       AD_BOOT_NO_ZSTD=1 sudo -E ./setup_boot_speed.sh
+```
+Sets `GRUB_TIMEOUT=0` + hidden menu, kernel cmdline tweaks
+(`vt.global_cursor_default=0 logo.nologo udev.log_level=3 i915.fastboot=1 fbcon=nodefer`),
+zstd initramfs, `DefaultTimeoutStopSec=10s`, `TimeoutStopSec=3` on
+`autodarts-chrome.service`, disables `*-wait-online`, `motd-news`,
+`apt-daily*.timer`. Hold Shift during POST to reach the GRUB menu when
+needed.
+
 ## Operator commands
 
 After installation:
@@ -239,6 +253,7 @@ After installation:
 ├── motd/
 │   └── 00-autodarts                 # branded SSH MOTD
 ├── setup_tailscale.sh               # opt-in remote support
+├── setup_boot_speed.sh              # GRUB+initramfs+systemd shutdown tuning
 ├── VERSION                          # semver pin shown by autodarts-status
 ├── CHANGELOG.md                     # release notes
 ├── CONTRIBUTING.md                  # dev workflow

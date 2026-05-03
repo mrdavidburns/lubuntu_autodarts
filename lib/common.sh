@@ -6,8 +6,10 @@
 ad_actual_user() {
     if [ -n "${SUDO_USER:-}" ] && [ "${SUDO_USER}" != "root" ]; then
         echo "$SUDO_USER"
-    else
+    elif [ -n "${USER:-}" ]; then
         echo "$USER"
+    else
+        id -un
     fi
 }
 

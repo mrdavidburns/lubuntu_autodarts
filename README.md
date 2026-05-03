@@ -24,8 +24,23 @@ This repository provides a complete setup solution for turning a fresh Lubuntu i
   - Auto-hiding taskbar
 - **System Tools**: Installs fastfetch and btop for system monitoring
 - **HDMI Audio**: Installs `pavucontrol` and routes audio to Digital Stereo (HDMI) Output by default
+- **Force-installed Chrome extensions**: [Tools for Autodarts](https://chromewebstore.google.com/detail/tools-for-autodarts/oolfddhehmbpdnlmoljmllcdggmkgihh) deployed via Chrome managed policy
+- **Auto-login + Watchdog**: SDDM autologin, systemd `--user` Chrome service with `Restart=always`, screen-blanking + sleep masked, popups suppressed
+- **Unattended Security Upgrades**: Daily security patches with 04:00 auto-reboot window
+- **Operator UX**: `autodarts-status` health command, `sound-test` HDMI verifier, big-button desktop shortcuts (Reboot, Shutdown, Restart AutoDarts, Open SUIT, Sound Test, Status), `Ctrl+Alt+Q` exit-kiosk hotkey, branded SSH MOTD
+- **Self-healing**: Weekly config backup (`~/Backups`), weekly upstream `git pull` + re-run
 
 ## Installation
+
+### One-line bootstrap
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mrdavidburns/lubuntu_autodarts/main/install.sh | bash
+```
+
+Clones the repo to `~/lubuntu_autodarts` and runs `essentials.sh`.
+
+### Manual install
 
 ### Prerequisites
 
@@ -76,12 +91,24 @@ The setup script will:
    - Customizes LXQt panel with AutoDarts branding
    - Adds Chrome and QTerminal to quick launch
    - Enables panel auto-hide
-8. **Install GRUB Theme** - Custom bootloader menu with AUTODARTS branding
-9. **Install Plymouth Theme** - Custom boot splash with AutoDarts branding (also covers the shutdown screen)
+8. **Install Operator Tools** — `autodarts-status`, `sound-test`, `exit-kiosk` to `/usr/local/bin`; branded MOTD
+9. **Install Chrome Watchdog** — systemd `--user` service that auto-restarts Chrome on crash
+10. **Install Exit Hotkey** — `Ctrl+Alt+Q` stops kiosk Chrome (LXQt globalkeyshortcuts)
+11. **Apply Kiosk Hardening** — disable screen blanking + DPMS, mask sleep targets, install `unclutter` + `fwupd`, lock LXQt panel, suppress update-notifier/snap-store popups, disable Bluetooth, NTP enabled
+12. **Install Desktop Shortcuts** — Restart AutoDarts, Reboot, Shutdown, Open SUIT, Sound Test, Status icons on `~/Desktop`
+13. **Configure SDDM Autologin** — drops `/etc/sddm.conf.d/10-autodarts-autologin.conf`, adds user to `autologin` group
+14. **Configure Unattended Upgrades** — security only, auto-reboot at 04:00
+15. **Configure Weekly Backup** — Sundays 03:30 → tarball of config/SUIT into `~/Backups` (last 4 kept)
+16. **Configure Repo Self-Update** — Sundays 03:00 `git pull` + rerun `essentials.sh` unattended
+17. **Install GRUB Theme** — Custom bootloader menu with AUTODARTS branding
+18. **Install Plymouth Theme** — Custom boot splash with AutoDarts branding (also covers the shutdown screen)
    - Automatically installs `plymouth-themes` package if needed
    - Configures theme files and animations
    - Verifies installation and theme selection
    - Optimizes initramfs for fast graphical boot
+19. **Run Verification** — Prints a tick/cross summary of everything above
+
+All output is also written to `/var/log/autodarts-setup.log` for support.
 
 ## Manual Component Setup
 
@@ -117,7 +144,61 @@ sudo ./setup_audio_hdmi.sh
 sudo ./setup_autologin.sh                 # use $SUDO_USER
 sudo ./setup_autologin.sh autodarts-user  # explicit user
 ```
-Installs `pavucontrol`, drops `~/.local/bin/set-hdmi-audio.sh`, and registers a login autostart entry that pins the default sink to `output:hdmi-stereo`.
+
+### Chrome Managed Policy Only (force-install extensions)
+```bash
+sudo ./setup_chrome_policy.sh
+EXTRA_EXTENSION_IDS=abc123,def456 sudo -E ./setup_chrome_policy.sh   # add more
+```
+
+### Chrome Watchdog Only
+```bash
+./setup_chrome_watchdog.sh
+AUTODARTS_URL=https://my.host ./setup_chrome_watchdog.sh
+```
+
+### Exit Hotkey Only
+```bash
+sudo ./setup_exit_hotkey.sh
+```
+
+### Kiosk Hardening Only
+```bash
+sudo ./setup_kiosk_hardening.sh
+```
+
+### Desktop Shortcuts Only
+```bash
+sudo ./setup_desktop_shortcuts.sh
+```
+
+### Unattended Upgrades Only
+```bash
+sudo ./setup_unattended_upgrades.sh
+```
+
+### Weekly Backup Only
+```bash
+sudo ./setup_backup.sh
+```
+
+### Weekly Self-Update Only
+```bash
+sudo ./setup_repo_autoupdate.sh
+```
+
+## Operator commands
+
+After installation:
+
+| Command | What it does |
+|---------|--------------|
+| `autodarts-status` | Health summary (network, audio, Chrome, boot timing, disk) |
+| `sound-test` | Pink-noise burst on the default sink to verify HDMI |
+| `exit-kiosk` | Stop kiosk Chrome and return to LXQt (also bound to `Ctrl+Alt+Q`) |
+| `systemctl --user restart autodarts-chrome` | Reload the kiosk Chrome session |
+| `autodarts-backup` | Force a config backup now |
+| `autodarts-self-update` | Force a repo pull + rerun |
 
 ## File Structure
 
@@ -125,10 +206,29 @@ Installs `pavucontrol`, drops `~/.local/bin/set-hdmi-audio.sh`, and registers a 
 .
 ├── essentials.sh                    # Main setup script
 ├── setup_chrome_autostart.sh        # Chrome fullscreen autostart config
+├── install.sh                       # one-line bootstrap (curl|bash)
 ├── setup_grub_theme.sh              # GRUB theme installer
 ├── setup_plymouth_theme.sh          # Plymouth theme installer
 ├── setup_audio_hdmi.sh              # pavucontrol + HDMI default sink installer
 ├── setup_autologin.sh               # SDDM autologin for kiosk operation
+├── setup_chrome_policy.sh           # Chrome managed policy + force-installed extensions
+├── setup_chrome_watchdog.sh         # systemd --user kiosk Chrome service
+├── setup_exit_hotkey.sh             # Ctrl+Alt+Q exit-kiosk
+├── setup_kiosk_hardening.sh         # blanking/sleep/popups/panel-lock
+├── setup_desktop_shortcuts.sh       # big-button operator launchers
+├── setup_unattended_upgrades.sh     # security-only auto upgrades
+├── setup_backup.sh                  # weekly config backup
+├── setup_repo_autoupdate.sh         # weekly upstream pull + rerun
+├── lib/
+│   ├── common.sh                    # shared helpers (sourced)
+│   ├── preflight.sh                 # pre-install checks
+│   └── verify.sh                    # post-install tick/cross summary
+├── bin/
+│   ├── autodarts-status             # health summary
+│   ├── exit-kiosk                   # stop kiosk Chrome
+│   └── sound-test                   # speaker-test on default sink
+├── motd/
+│   └── 00-autodarts                 # branded SSH MOTD
 ├── update_quick_launch.py           # LXQt panel quick launch updater
 ├── images/
 │   ├── autodarts_logo.png          # AutoDarts logo for panel/Plymouth/GRUB

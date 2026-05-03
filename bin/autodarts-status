@@ -1,0 +1,93 @@
+#!/bin/bash
+# autodarts-status — operator-friendly health summary.
+# Run on the kiosk machine when something looks off; copy/paste the output
+# into a support ticket. Safe to run repeatedly.
+
+set -u
+
+bold()  { printf '\033[1m%s\033[0m\n' "$*"; }
+ok()    { printf '  \033[32m✓\033[0m %s\n' "$*"; }
+warn()  { printf '  \033[33m!\033[0m %s\n' "$*"; }
+fail()  { printf '  \033[31m✗\033[0m %s\n' "$*"; }
+
+USER_HOME=$(eval echo ~"${SUDO_USER:-$USER}")
+
+bold "== AutoDarts kiosk status =="
+echo "  Host: $(hostnamectl --static 2>/dev/null || hostname)"
+echo "  User: ${SUDO_USER:-$USER}"
+echo "  Date: $(date)"
+[ -r /etc/os-release ] && . /etc/os-release && echo "  OS:   ${PRETTY_NAME:-?}"
+echo
+
+bold "Network"
+if ip -4 addr show 2>/dev/null | grep -q "inet "; then
+    ip -4 addr show 2>/dev/null | awk '/inet / && $NF !~ /^lo$/ {printf "  %s on %s\n", $2, $NF}'
+else
+    fail "no IPv4 address"
+fi
+if curl -fsS --max-time 5 https://play.autodarts.io/ -o /dev/null 2>&1; then
+    ok "play.autodarts.io reachable"
+else
+    fail "play.autodarts.io unreachable"
+fi
+echo
+
+bold "Audio"
+if command -v pactl >/dev/null 2>&1; then
+    sink=$(pactl get-default-sink 2>/dev/null || echo "?")
+    echo "  Default sink: $sink"
+    case "$sink" in
+        *hdmi*) ok "HDMI sink active" ;;
+        *)      warn "default sink is not HDMI; run: $USER_HOME/.local/bin/set-hdmi-audio.sh" ;;
+    esac
+else
+    warn "pactl not installed"
+fi
+echo
+
+bold "Chrome watchdog"
+if systemctl --user is-active autodarts-chrome.service >/dev/null 2>&1; then
+    ok "autodarts-chrome.service active"
+elif systemctl --user is-enabled autodarts-chrome.service >/dev/null 2>&1; then
+    warn "enabled but not active"
+else
+    warn "autodarts-chrome user service missing/disabled"
+fi
+echo
+
+bold "Boot timing"
+if command -v systemd-analyze >/dev/null 2>&1; then
+    systemd-analyze 2>/dev/null | sed 's/^/  /'
+fi
+echo
+
+bold "Plymouth / GRUB"
+if command -v plymouth-set-default-theme >/dev/null 2>&1; then
+    theme=$(plymouth-set-default-theme 2>/dev/null || echo "?")
+    [ "$theme" = "autodarts" ] && ok "Plymouth theme: $theme" || warn "Plymouth theme: $theme"
+fi
+[ -d /boot/grub/themes/autodarts ] && ok "GRUB theme installed" || warn "GRUB theme missing"
+echo
+
+bold "Auto-updates"
+if dpkg -s unattended-upgrades >/dev/null 2>&1; then
+    ok "unattended-upgrades installed"
+    last=$(grep -h "Starting unattended upgrades script" /var/log/unattended-upgrades/unattended-upgrades.log 2>/dev/null | tail -1)
+    [ -n "$last" ] && echo "  Last run: $last"
+else
+    warn "unattended-upgrades NOT installed"
+fi
+echo
+
+bold "Disk"
+df -h / | awk 'NR==2 {printf "  / : %s used of %s (%s full)\n", $3, $2, $5}'
+echo
+
+bold "Recent setup log"
+log=/var/log/autodarts-setup.log
+if [ -r "$log" ]; then
+    echo "  Last 5 lines of $log:"
+    tail -5 "$log" | sed 's/^/    /'
+else
+    echo "  No setup log at $log."
+fi

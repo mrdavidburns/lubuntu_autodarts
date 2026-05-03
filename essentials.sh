@@ -1,10 +1,13 @@
 #!/bin/bash
 # Part of lubuntu_autodarts - MIT License
 # See LICENSE file for details
+#
+# One-shot kiosk setup. Re-execs under sudo, logs to /var/log/autodarts-setup.log,
+# runs preflight + every step + post-install verify. Set AD_AUTOCONFIRM=1 to
+# skip the confirmation prompt (used by the weekly self-update cron).
 
 set -euo pipefail
 
-# Re-exec under sudo so the whole script runs as root with $SUDO_USER set.
 if [ "$EUID" -ne 0 ]; then
     exec sudo -E "$0" "$@"
 fi
@@ -14,26 +17,35 @@ if [ -z "${SUDO_USER:-}" ] || [ "$SUDO_USER" = "root" ]; then
     exit 1
 fi
 
-ACTUAL_USER="$SUDO_USER"
-ACTUAL_HOME=$(eval echo ~"$ACTUAL_USER")
-
-# Capture absolute script directory so it remains valid after any cd operations
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/common.sh"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/preflight.sh"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/verify.sh"
 
-# Per-step error handling: warn and continue rather than abort the whole run.
-run_step() {
-    local label="$1"; shift
-    echo
-    echo "==> $label"
-    if ! "$@"; then
-        echo "Warning: step '$label' failed (continuing)." >&2
-    fi
-}
+# Tee everything to the log so post-mortem is easy.
+LOG=/var/log/autodarts-setup.log
+mkdir -p "$(dirname "$LOG")"
+touch "$LOG"
+chmod 0644 "$LOG"
+exec > >(tee -a "$LOG") 2>&1
+echo
+echo "=== AutoDarts setup run @ $(date -Is) ==="
+
+ACTUAL_USER=$(ad_actual_user)
+ACTUAL_HOME=$(ad_actual_home)
+AUTODARTS_URL="${AUTODARTS_URL:-https://play.autodarts.io/}"
+export AUTODARTS_URL
+
+ad_preflight || exit 1
+ad_confirm || exit 1
 
 apt update
-apt install -y curl wget software-properties-common lsb-release
+apt install -y curl wget software-properties-common lsb-release ca-certificates
 
-# 1. Install Google Chrome (idempotent)
+# 1. Google Chrome (idempotent)
 install_chrome() {
     if command -v google-chrome-stable >/dev/null 2>&1; then
         echo "google-chrome-stable already installed."
@@ -45,17 +57,16 @@ install_chrome() {
     dpkg -i "$deb" || apt --fix-broken install -y
     rm -f "$deb"
 }
-run_step "Install Google Chrome" install_chrome
+ad_step "Install Google Chrome" install_chrome
 
-# 2. Install AutoDarts (run as actual user so groups + $HOME are correct)
-run_step "Install AutoDarts" \
-    sudo -u "$ACTUAL_USER" bash -c 'bash <(curl -sL get.autodarts.io)'
+# 2. AutoDarts (run as kiosk user)
+ad_step "Install AutoDarts" \
+    sudo -u "$ACTUAL_USER" -H bash -c 'bash <(curl -sL get.autodarts.io)'
 
-# 3. Configure LXQt Autostart for Chrome fullscreen
-run_step "Configure Chrome autostart" \
-    sudo -u "$ACTUAL_USER" -H bash "$SCRIPT_DIR/setup_chrome_autostart.sh"
+# 3. Chrome managed-policy + force-installed extensions
+ad_step "Install Chrome managed policy" bash "$SCRIPT_DIR/setup_chrome_policy.sh"
 
-# 4. System tools (fastfetch, btop). Use distro fastfetch if available.
+# 4. System tools (fastfetch, btop)
 install_system_tools() {
     apt install -y btop
     if apt-cache show fastfetch >/dev/null 2>&1; then
@@ -66,9 +77,9 @@ install_system_tools() {
         apt install -y fastfetch
     fi
 }
-run_step "Install fastfetch + btop" install_system_tools
+ad_step "Install fastfetch + btop" install_system_tools
 
-# 5. Install SUIT inside a venv to avoid PEP 668 breakage
+# 5. SUIT inside its own venv
 install_suit() {
     apt install -y python3-tk python3-dbus python3-pip python3-venv git libdbus-1-dev
     local suit_dir="$ACTUAL_HOME/SUIT"
@@ -83,18 +94,18 @@ install_suit() {
     if [ -f "$suit_dir/requirements.txt" ]; then
         sudo -u "$ACTUAL_USER" "$suit_dir/.venv/bin/pip" install --upgrade pip
         sudo -u "$ACTUAL_USER" "$suit_dir/.venv/bin/pip" install -r "$suit_dir/requirements.txt" || \
-            echo "Warning: SUIT requirements install failed."
+            ad_warn "SUIT requirements install failed."
     fi
     if [ -f "$suit_dir/create_launcher.py" ]; then
         sudo -u "$ACTUAL_USER" bash -c "cd '$suit_dir' && '.venv/bin/python' create_launcher.py"
     fi
 }
-run_step "Install SUIT" install_suit
+ad_step "Install SUIT" install_suit
 
-# 6. HDMI audio (pavucontrol + per-user default-sink helper)
-run_step "Configure HDMI audio" bash "$SCRIPT_DIR/setup_audio_hdmi.sh"
+# 6. Audio
+ad_step "Configure HDMI audio" bash "$SCRIPT_DIR/setup_audio_hdmi.sh"
 
-# 7. Desktop customization (wallpaper, panel, quick launch)
+# 7. Desktop customization
 apply_desktop_customizations() {
     sudo -u "$ACTUAL_USER" mkdir -p "$ACTUAL_HOME/Pictures" "$ACTUAL_HOME/.local/share/icons"
 
@@ -103,9 +114,7 @@ apply_desktop_customizations() {
         sudo -u "$ACTUAL_USER" -H pcmanfm-qt \
             --set-wallpaper="$ACTUAL_HOME/Pictures/four-darts-desktop-wallpaper.webp" \
             --wallpaper-mode=stretch || \
-            echo "Warning: pcmanfm-qt wallpaper set failed (no DISPLAY?)."
-    else
-        echo "Warning: wallpaper image missing."
+            ad_warn "pcmanfm-qt wallpaper set failed (likely no DISPLAY at install time — wallpaper will apply on first login)."
     fi
 
     if [ -f "$SCRIPT_DIR/images/autodarts_logo.png" ]; then
@@ -116,31 +125,61 @@ apply_desktop_customizations() {
     if [ -f "$panel_conf" ]; then
         sudo -u "$ACTUAL_USER" cp "$panel_conf" "$panel_conf.bak"
         sudo -u "$ACTUAL_USER" sed -i 's/hidable=false/hidable=true/g' "$panel_conf"
-
         local logo_path="$ACTUAL_HOME/.local/share/icons/autodarts_logo.png"
         local escaped
         escaped=$(printf '%s' "$logo_path" | sed 's/\//\\\//g')
         sudo -u "$ACTUAL_USER" sed -i "/^\[mainmenu\]/,/^\[/ s/^icon=.*/icon=$escaped/" "$panel_conf"
         sudo -u "$ACTUAL_USER" sed -i "/^\[mainmenu\]/,/^\[/ s/^title=.*/title=AutoDarts/" "$panel_conf"
-
         if [ -f "$SCRIPT_DIR/update_quick_launch.py" ]; then
             sudo -u "$ACTUAL_USER" -H python3 "$SCRIPT_DIR/update_quick_launch.py"
         fi
-    else
-        echo "Warning: $panel_conf missing — skip panel tweaks."
     fi
 }
-run_step "Apply desktop customizations" apply_desktop_customizations
+ad_step "Apply desktop customizations" apply_desktop_customizations
 
-# 8. SDDM autologin for kiosk operation
-run_step "Configure SDDM autologin" bash "$SCRIPT_DIR/setup_autologin.sh" "$ACTUAL_USER"
+# 8. Operator UX: status command, sound test, MOTD
+install_operator_tools() {
+    install -m 0755 "$SCRIPT_DIR/bin/autodarts-status" /usr/local/bin/autodarts-status
+    install -m 0755 "$SCRIPT_DIR/bin/sound-test"        /usr/local/bin/sound-test
+    install -m 0755 "$SCRIPT_DIR/bin/exit-kiosk"        /usr/local/bin/exit-kiosk
+    install -m 0755 "$SCRIPT_DIR/motd/00-autodarts"     /etc/update-motd.d/00-autodarts
+    apt install -y alsa-utils libnotify-bin
+}
+ad_step "Install operator tools (status, sound-test, MOTD)" install_operator_tools
 
-# 9. GRUB theme
-run_step "Install GRUB theme" bash "$SCRIPT_DIR/setup_grub_theme.sh"
+# 9. Chrome watchdog (systemd --user, replaces autostart .desktop)
+ad_step "Install Chrome watchdog" bash "$SCRIPT_DIR/setup_chrome_watchdog.sh"
 
-# 10. Plymouth theme (boot + shutdown screen)
-run_step "Install Plymouth theme" bash "$SCRIPT_DIR/setup_plymouth_theme.sh"
+# 10. Exit hotkey (Ctrl+Alt+Q)
+ad_step "Install exit hotkey" bash "$SCRIPT_DIR/setup_exit_hotkey.sh"
+
+# 11. Kiosk hardening (blanking, sleep, popups, panel lock, BT, fwupd, NTP)
+ad_step "Apply kiosk hardening" bash "$SCRIPT_DIR/setup_kiosk_hardening.sh"
+
+# 12. Desktop shortcuts (Reboot, Shutdown, Sound Test, Status, SUIT)
+ad_step "Install desktop shortcuts" bash "$SCRIPT_DIR/setup_desktop_shortcuts.sh"
+
+# 13. SDDM autologin
+ad_step "Configure SDDM autologin" bash "$SCRIPT_DIR/setup_autologin.sh" "$ACTUAL_USER"
+
+# 14. Unattended security upgrades + nightly reboot
+ad_step "Configure unattended-upgrades" bash "$SCRIPT_DIR/setup_unattended_upgrades.sh"
+
+# 15. Weekly config backup
+ad_step "Configure weekly backup" bash "$SCRIPT_DIR/setup_backup.sh"
+
+# 16. Weekly repo self-update
+ad_step "Configure repo self-update" bash "$SCRIPT_DIR/setup_repo_autoupdate.sh"
+
+# 17. GRUB theme
+ad_step "Install GRUB theme" bash "$SCRIPT_DIR/setup_grub_theme.sh"
+
+# 18. Plymouth theme (boot + shutdown)
+ad_step "Install Plymouth theme" bash "$SCRIPT_DIR/setup_plymouth_theme.sh"
+
+# Final verification + summary
+ad_verify
 
 echo
-echo "Installation and configuration complete."
-echo "Reboot to see boot/shutdown screens, GRUB theme, and HDMI audio routing."
+echo "=== Setup complete @ $(date -Is) ==="
+echo "Log: $LOG"

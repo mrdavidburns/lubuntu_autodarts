@@ -1,0 +1,22 @@
+#!/bin/bash
+# sound-test — verify audio is reaching the default sink (HDMI).
+# Plays a 2-channel pink-noise sweep on the current default sink.
+
+set -e
+
+if ! command -v speaker-test >/dev/null 2>&1; then
+    echo "speaker-test not installed (apt install alsa-utils)." >&2
+    exit 1
+fi
+
+# Confirm via PulseAudio sink if available.
+if command -v pactl >/dev/null 2>&1; then
+    sink=$(pactl get-default-sink 2>/dev/null || true)
+    [ -n "$sink" ] && echo "Default sink: $sink"
+fi
+
+echo "Playing 2 seconds of pink noise on each channel — listen for left then right."
+speaker-test -t pink -c 2 -l 1 -p 4000 >/dev/null 2>&1 || true
+echo "Done. If you heard nothing:"
+echo "  1. Run: pavucontrol  (verify Output Devices > HDMI is selected)"
+echo "  2. Run: ~/.local/bin/set-hdmi-audio.sh"

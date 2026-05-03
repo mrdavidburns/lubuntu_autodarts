@@ -1,6 +1,7 @@
 # Lubuntu AutoDarts Setup
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/mrdavidburns/lubuntu_autodarts/actions/workflows/ci.yml/badge.svg)](https://github.com/mrdavidburns/lubuntu_autodarts/actions/workflows/ci.yml)
 
 Automated setup scripts for configuring a Lubuntu installation as a dedicated AutoDarts system with custom branding and boot experience.
 
@@ -28,7 +29,10 @@ This repository provides a complete setup solution for turning a fresh Lubuntu i
 - **Auto-login + Watchdog**: SDDM autologin, systemd `--user` Chrome service with `Restart=always`, screen-blanking + sleep masked, popups suppressed
 - **Unattended Security Upgrades**: Daily security patches with 04:00 auto-reboot window
 - **Operator UX**: `autodarts-status` health command, `sound-test` HDMI verifier, big-button desktop shortcuts (Reboot, Shutdown, Restart AutoDarts, Open SUIT, Sound Test, Status), `Ctrl+Alt+Q` exit-kiosk hotkey, branded SSH MOTD
-- **Self-healing**: Weekly config backup (`~/Backups`), weekly upstream `git pull` + re-run
+- **Self-healing**: Weekly config backup (`~/Backups`), weekly upstream `git pull` + re-run via systemd timers
+- **Optional remote support**: Opt-in Tailscale enrollment (`AD_ENABLE_TAILSCALE=1 TS_AUTHKEY=...`)
+- **Observability**: Prometheus textfile metrics for `node_exporter` (`autodarts_up`, `autodarts_hdmi_active`, etc.)
+- **Hardening**: ufw firewall (deny-in, allow mDNS + Tailscale), sudoers lockdown, `NAutoVTs=1`, power button → poweroff, GPG-verified Chrome apt repo, pinned SUIT ref
 
 ## Installation
 
@@ -187,6 +191,11 @@ sudo ./setup_backup.sh
 sudo ./setup_repo_autoupdate.sh
 ```
 
+### Tailscale (opt-in)
+```bash
+AD_ENABLE_TAILSCALE=1 TS_AUTHKEY=tskey-... sudo -E ./setup_tailscale.sh
+```
+
 ## Operator commands
 
 After installation:
@@ -229,6 +238,26 @@ After installation:
 │   └── sound-test                   # speaker-test on default sink
 ├── motd/
 │   └── 00-autodarts                 # branded SSH MOTD
+├── setup_tailscale.sh               # opt-in remote support
+├── VERSION                          # semver pin shown by autodarts-status
+├── CHANGELOG.md                     # release notes
+├── CONTRIBUTING.md                  # dev workflow
+├── .editorconfig                    # editor consistency
+├── .pre-commit-config.yaml          # local lint hooks
+├── .github/
+│   ├── workflows/{ci,release}.yml   # shellcheck/shfmt/ruff/bats/smoke + releases
+│   ├── dependabot.yml               # weekly action bumps
+│   └── ISSUE_TEMPLATE/              # bug + feature templates
+├── tests/
+│   ├── common.bats                  # bats unit tests for lib/
+│   ├── Dockerfile.smoke             # CI container image
+│   └── smoke-run.sh                 # idempotent CI smoke runner
+└── docs/
+    ├── README.md                    # design-log index
+    ├── BOOT_BRANDING_GUIDE.md
+    ├── INITRAMFS_INVESTIGATION.md
+    ├── PLYMOUTH_VERIFICATION.md
+    └── PR_SUMMARY.md
 ├── update_quick_launch.py           # LXQt panel quick launch updater
 ├── images/
 │   ├── autodarts_logo.png          # AutoDarts logo for panel/Plymouth/GRUB

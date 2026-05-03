@@ -13,26 +13,32 @@ ad_check() {
 
 ad_verify() {
     ad_section "Post-install verification"
+    local home; home=$(ad_actual_home)
+    local user; user=$(ad_actual_user)
 
     ad_check "Google Chrome installed" command -v google-chrome-stable
     ad_check "AutoDarts installer ran (HOME/autodarts present)" \
-        test -d "$(ad_actual_home)/autodarts"
-    ad_check "SUIT cloned" test -d "$(ad_actual_home)/SUIT/.git"
+        test -d "$home/autodarts"
+    ad_check "SUIT cloned" test -d "$home/SUIT/.git"
     ad_check "Plymouth default = autodarts" \
         bash -c 'plymouth-set-default-theme | grep -q "^autodarts$"'
     ad_check "GRUB theme installed" test -d /boot/grub/themes/autodarts
     ad_check "pavucontrol installed" command -v pavucontrol
     ad_check "HDMI helper installed" \
-        test -x "$(ad_actual_home)/.local/bin/set-hdmi-audio.sh"
+        test -x "$home/.local/bin/set-hdmi-audio.sh"
     ad_check "SDDM autologin configured" \
         test -f /etc/sddm.conf.d/10-autodarts-autologin.conf
     ad_check "User in autologin group" \
-        bash -c "id -nG '$(ad_actual_user)' | grep -qw autologin"
+        bash -c "id -nG '$user' | grep -qw autologin"
     ad_check "unattended-upgrades installed" \
         dpkg -s unattended-upgrades
     ad_check "Chrome systemd user unit present" \
-        test -f "$(ad_actual_home)/.config/systemd/user/autodarts-chrome.service"
+        test -f "$home/.config/systemd/user/autodarts-chrome.service"
     ad_check "autodarts-status on PATH" command -v autodarts-status
+    ad_check "backup timer enabled" \
+        systemctl is-enabled autodarts-backup.timer
+    ad_check "self-update timer enabled" \
+        systemctl is-enabled autodarts-self-update.timer
 
     echo
     ad_section "Boot timing (last boot)"

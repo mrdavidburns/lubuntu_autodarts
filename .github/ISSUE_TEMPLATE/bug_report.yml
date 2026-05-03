@@ -1,0 +1,40 @@
+name: Bug report
+description: Something broke on a kiosk
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please paste the output of `autodarts-status` and the last 50 lines of
+        `/var/log/autodarts-setup.log` so we can debug without back-and-forth.
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware
+      description: Make/model/CPU/GPU/dock
+    validations:
+      required: false
+  - type: input
+    id: lubuntu
+    attributes:
+      label: Lubuntu version (lsb_release -d)
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: autodarts-status output
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Last 50 lines of /var/log/autodarts-setup.log
+      render: shell
+  - type: textarea
+    id: details
+    attributes:
+      label: What happened?
+    validations:
+      required: true

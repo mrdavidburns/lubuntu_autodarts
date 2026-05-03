@@ -147,10 +147,22 @@ if [ -f "$MODULES_FILE" ]; then
     add_module "drm_kms_helper"
     add_module "drm"
 
-    echo "Updating initramfs for all kernels (this may take a moment)..."
-    sudo update-initramfs -u -k all
-    
-    echo "✓ Initramfs updated successfully."
+    # Skip the expensive initramfs rebuild when nothing has changed.
+    STAMP_DIR=/var/lib/autodarts
+    STAMP_FILE="$STAMP_DIR/plymouth-initramfs.sha256"
+    sudo mkdir -p "$STAMP_DIR"
+    HASH=$( {
+        find "$THEME_DIR" -type f -print0 | sort -z | xargs -0 sha256sum
+        sha256sum "$MODULES_FILE"
+    } 2>/dev/null | sha256sum | awk '{print $1}')
+    if [ -f "$STAMP_FILE" ] && [ "$(sudo cat "$STAMP_FILE" 2>/dev/null)" = "$HASH" ]; then
+        echo "Theme + initramfs modules unchanged — skipping update-initramfs."
+    else
+        echo "Updating initramfs for all kernels (this may take a moment)..."
+        sudo update-initramfs -u -k all
+        echo "$HASH" | sudo tee "$STAMP_FILE" >/dev/null
+        echo "✓ Initramfs updated successfully."
+    fi
 else
     echo "Warning: $MODULES_FILE not found. Skipping Initramfs module configuration."
 fi

@@ -6,7 +6,7 @@
 # runs preflight + every step + post-install verify. Set AD_AUTOCONFIRM=1 to
 # skip the confirmation prompt (used by the weekly self-update cron).
 
-set -euo pipefail
+set -Eeuo pipefail
 
 if [ "$EUID" -ne 0 ]; then
     exec sudo -E "$0" "$@"
@@ -17,6 +17,15 @@ if [ -z "${SUDO_USER:-}" ] || [ "$SUDO_USER" = "root" ]; then
     exit 1
 fi
 
+# Serialize against self-update cron + concurrent manual runs.
+LOCK=/var/lock/autodarts-setup.lock
+mkdir -p "$(dirname "$LOCK")"
+exec 9>"$LOCK"
+if ! flock -n 9; then
+    echo "Another autodarts setup is running (lock: $LOCK). Exiting." >&2
+    exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/lib/common.sh"
@@ -24,6 +33,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/lib/preflight.sh"
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/lib/verify.sh"
+
+trap 'ad_on_err $LINENO $? "$BASH_COMMAND"' ERR
 
 # Tee everything to the log so post-mortem is easy.
 LOG=/var/log/autodarts-setup.log
@@ -45,17 +56,24 @@ ad_confirm || exit 1
 apt update
 apt install -y curl wget software-properties-common lsb-release ca-certificates
 
-# 1. Google Chrome (idempotent)
+# 1. Google Chrome — install via Google's signed apt repo (verified by GPG).
 install_chrome() {
     if command -v google-chrome-stable >/dev/null 2>&1; then
         echo "google-chrome-stable already installed."
         return 0
     fi
-    local deb
-    deb=$(mktemp --suffix=.deb)
-    wget -q -O "$deb" https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-    dpkg -i "$deb" || apt --fix-broken install -y
-    rm -f "$deb"
+    local key=/etc/apt/keyrings/google-chrome.gpg
+    mkdir -p /etc/apt/keyrings
+    if [ ! -f "$key" ]; then
+        ad_retry 4 bash -c "curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | \
+            gpg --dearmor -o '$key'"
+        chmod 0644 "$key"
+    fi
+    ad_atomic_write /etc/apt/sources.list.d/google-chrome.list 0644 root:root <<EOF
+deb [arch=amd64 signed-by=$key] https://dl.google.com/linux/chrome/deb/ stable main
+EOF
+    ad_apt update
+    ad_apt install google-chrome-stable
 }
 ad_step "Install Google Chrome" install_chrome
 
@@ -79,15 +97,19 @@ install_system_tools() {
 }
 ad_step "Install fastfetch + btop" install_system_tools
 
-# 5. SUIT inside its own venv
+# 5. SUIT inside its own venv. SUIT_REF pins to a specific commit/tag/branch
+# so upstream surprise can't break the kiosk silently. Default: main HEAD.
 install_suit() {
     apt install -y python3-tk python3-dbus python3-pip python3-venv git libdbus-1-dev
     local suit_dir="$ACTUAL_HOME/SUIT"
+    local suit_ref="${SUIT_REF:-main}"
     if [ -d "$suit_dir/.git" ]; then
-        sudo -u "$ACTUAL_USER" git -C "$suit_dir" pull
+        sudo -u "$ACTUAL_USER" git -C "$suit_dir" fetch --quiet origin
     else
         sudo -u "$ACTUAL_USER" git clone https://github.com/IteraThor/SUIT.git "$suit_dir"
     fi
+    sudo -u "$ACTUAL_USER" git -C "$suit_dir" checkout --quiet "$suit_ref" || \
+        ad_warn "SUIT ref '$suit_ref' not found; staying on current HEAD."
     if [ ! -d "$suit_dir/.venv" ]; then
         sudo -u "$ACTUAL_USER" python3 -m venv "$suit_dir/.venv" --system-site-packages
     fi
@@ -137,12 +159,14 @@ apply_desktop_customizations() {
 }
 ad_step "Apply desktop customizations" apply_desktop_customizations
 
-# 8. Operator UX: status command, sound test, MOTD
+# 8. Operator UX: status command, sound test, MOTD, VERSION pin
 install_operator_tools() {
     install -m 0755 "$SCRIPT_DIR/bin/autodarts-status" /usr/local/bin/autodarts-status
     install -m 0755 "$SCRIPT_DIR/bin/sound-test"        /usr/local/bin/sound-test
     install -m 0755 "$SCRIPT_DIR/bin/exit-kiosk"        /usr/local/bin/exit-kiosk
     install -m 0755 "$SCRIPT_DIR/motd/00-autodarts"     /etc/update-motd.d/00-autodarts
+    install -d -m 0755 /usr/local/share/autodarts
+    install -m 0644 "$SCRIPT_DIR/VERSION" /usr/local/share/autodarts/VERSION
     apt install -y alsa-utils libnotify-bin
 }
 ad_step "Install operator tools (status, sound-test, MOTD)" install_operator_tools
@@ -164,6 +188,9 @@ ad_step "Configure SDDM autologin" bash "$SCRIPT_DIR/setup_autologin.sh" "$ACTUA
 
 # 14. Unattended security upgrades + nightly reboot
 ad_step "Configure unattended-upgrades" bash "$SCRIPT_DIR/setup_unattended_upgrades.sh"
+
+# 14b. Optional Tailscale enrollment (no-op unless AD_ENABLE_TAILSCALE=1)
+ad_step "Configure Tailscale (optional)" bash "$SCRIPT_DIR/setup_tailscale.sh"
 
 # 15. Weekly config backup
 ad_step "Configure weekly backup" bash "$SCRIPT_DIR/setup_backup.sh"

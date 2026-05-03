@@ -10,7 +10,7 @@
 set -euo pipefail
 
 ACTUAL_USER="${SUDO_USER:-$USER}"
-ACTUAL_HOME=$(eval echo ~"$ACTUAL_USER")
+ACTUAL_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
 AUTODARTS_URL="${AUTODARTS_URL:-https://play.autodarts.io/}"
 
 UNIT_DIR="$ACTUAL_HOME/.config/systemd/user"

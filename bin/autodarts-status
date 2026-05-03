@@ -12,7 +12,10 @@ fail()  { printf '  \033[31m✗\033[0m %s\n' "$*"; }
 
 USER_HOME=$(eval echo ~"${SUDO_USER:-$USER}")
 
-bold "== AutoDarts kiosk status =="
+VERSION_FILE=/usr/local/share/autodarts/VERSION
+[ -r "$VERSION_FILE" ] && VERSION=$(cat "$VERSION_FILE") || VERSION="unknown"
+
+bold "== AutoDarts kiosk status (v$VERSION) =="
 echo "  Host: $(hostnamectl --static 2>/dev/null || hostname)"
 echo "  User: ${SUDO_USER:-$USER}"
 echo "  Date: $(date)"
@@ -90,4 +93,35 @@ if [ -r "$log" ]; then
     tail -5 "$log" | sed 's/^/    /'
 else
     echo "  No setup log at $log."
+fi
+
+# Prometheus textfile exporter integration. node_exporter ships with the
+# textfile collector pointed at /var/lib/node_exporter/textfile_collector;
+# we emit metrics there if the directory exists and we can write to it.
+prom_dir=/var/lib/node_exporter/textfile_collector
+if [ -w "$prom_dir" ] 2>/dev/null; then
+    tmp=$(mktemp "$prom_dir/.autodarts.XXXXXX")
+    {
+        printf '# HELP autodarts_up 1 if AutoDarts kiosk Chrome service is active.\n'
+        printf '# TYPE autodarts_up gauge\n'
+        if systemctl --user is-active autodarts-chrome.service >/dev/null 2>&1; then
+            printf 'autodarts_up 1\n'
+        else
+            printf 'autodarts_up 0\n'
+        fi
+        printf '# HELP autodarts_hdmi_active 1 if default sink name contains "hdmi".\n'
+        printf '# TYPE autodarts_hdmi_active gauge\n'
+        if echo "${sink:-}" | grep -qi hdmi; then
+            printf 'autodarts_hdmi_active 1\n'
+        else
+            printf 'autodarts_hdmi_active 0\n'
+        fi
+        printf '# HELP autodarts_disk_used_ratio Used ratio of root filesystem.\n'
+        printf '# TYPE autodarts_disk_used_ratio gauge\n'
+        df / | awk 'NR==2 {gsub("%","",$5); printf "autodarts_disk_used_ratio %.4f\n", $5/100}'
+        printf '# HELP autodarts_status_timestamp_seconds Unix time autodarts-status last ran.\n'
+        printf '# TYPE autodarts_status_timestamp_seconds gauge\n'
+        printf 'autodarts_status_timestamp_seconds %s\n' "$(date +%s)"
+    } > "$tmp" 2>/dev/null || true
+    mv -f "$tmp" "$prom_dir/autodarts.prom" 2>/dev/null || rm -f "$tmp"
 fi

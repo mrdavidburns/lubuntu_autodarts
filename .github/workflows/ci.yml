@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install lint tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck python3-pip jq
+          curl -fsSL https://github.com/mvdan/sh/releases/download/v3.8.0/shfmt_v3.8.0_linux_amd64 \
+            -o /usr/local/bin/shfmt
+          sudo chmod +x /usr/local/bin/shfmt
+          pip install --user ruff
+
+      - name: shellcheck
+        run: |
+          shopt -s globstar nullglob
+          set -e
+          shellcheck \
+            essentials.sh install.sh setup_*.sh lib/*.sh bin/* motd/* \
+            tests/*.bats || true   # bats is checked separately
+          # Re-run with -S error so the job actually fails on errors.
+          shellcheck -S error \
+            essentials.sh install.sh setup_*.sh lib/*.sh bin/autodarts-status \
+            bin/exit-kiosk bin/sound-test motd/00-autodarts
+
+      - name: shfmt (check)
+        run: shfmt -d -i 4 -ci -bn essentials.sh install.sh setup_*.sh lib/*.sh
+
+      - name: ruff
+        run: ~/.local/bin/ruff check update_quick_launch.py
+
+      - name: JSON syntax (Chrome policy template)
+        run: |
+          # Render the policy via a tmp run that just dumps JSON.
+          out=$(grep -A 200 'cat > "$POLICY_FILE"' setup_chrome_policy.sh \
+                 | sed -n '/<<EOF/,/^EOF$/p' | sed '1d;$d' \
+                 | sed 's/\$forcelist/[]/g; s/^\([[:space:]]*\)\$.*/\1/')
+          echo "$out" | jq .
+
+  bats:
+    runs-on: ubuntu-24.04
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install bats
+        run: sudo apt-get update && sudo apt-get install -y bats
+      - name: Run unit tests
+        run: bats tests/
+
+  smoke:
+    runs-on: ubuntu-24.04
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build smoke-test image
+        run: docker build -f tests/Dockerfile.smoke -t autodarts-smoke .
+      - name: First run (idempotency baseline)
+        run: |
+          docker run --rm --name smoke1 -v "$PWD:/repo" autodarts-smoke \
+            bash -c "cd /repo && AD_AUTOCONFIRM=1 AD_SMOKE=1 ./tests/smoke-run.sh"
+      - name: Second run (idempotency check)
+        run: |
+          docker run --rm --name smoke2 -v "$PWD:/repo" autodarts-smoke \
+            bash -c "cd /repo && AD_AUTOCONFIRM=1 AD_SMOKE=1 ./tests/smoke-run.sh && \
+                     AD_AUTOCONFIRM=1 AD_SMOKE=1 ./tests/smoke-run.sh"

@@ -11,7 +11,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 ACTUAL_USER="${SUDO_USER:-$USER}"
-ACTUAL_HOME=$(eval echo ~"$ACTUAL_USER")
+ACTUAL_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
 
 apt update
 apt install -y unclutter xdotool fwupd
@@ -95,4 +95,84 @@ sudo -u "$ACTUAL_USER" tee "$NOTIFY_CONF" >/dev/null <<'EOF'
 DoNotDisturb=true
 EOF
 
-echo "Kiosk hardening complete: blanking off, sleep masked, popups suppressed, panel locked."
+# 9. Power button → poweroff (no menu). Players hit it; make it work.
+LOGIND_DROPIN=/etc/systemd/logind.conf.d/00-autodarts.conf
+mkdir -p "$(dirname "$LOGIND_DROPIN")"
+cat > "$LOGIND_DROPIN" <<'EOF'
+[Login]
+HandlePowerKey=poweroff
+HandlePowerKeyLongPress=reboot
+HandleSuspendKey=ignore
+HandleHibernateKey=ignore
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+HandleLidSwitchDocked=ignore
+# Single VT — Ctrl+Alt+F2..F6 give nothing to escape to.
+NAutoVTs=1
+ReserveVT=1
+EOF
+systemctl restart systemd-logind || true
+
+# 10. UFW: block all inbound, allow Tailscale + mDNS if present, allow all outbound.
+if ! command -v ufw >/dev/null 2>&1; then
+    apt install -y ufw
+fi
+ufw --force reset >/dev/null
+ufw default deny incoming
+ufw default allow outgoing
+# mDNS for AutoDarts board discovery on LAN.
+ufw allow 5353/udp comment "mDNS"
+# Tailscale (only matters if it's installed; rule is harmless otherwise).
+ufw allow in on tailscale0 comment "Tailscale tunnel"
+ufw --force enable
+
+# 11. Sudoers lockdown: passwordless sudo only for kiosk-relevant commands.
+SUDOERS_FILE=/etc/sudoers.d/10-autodarts-kiosk
+cat > "$SUDOERS_FILE" <<EOF
+# Managed by lubuntu_autodarts. Do not edit by hand.
+# Allows the kiosk user to run a small, kiosk-relevant set of root commands
+# without a password. Does NOT grant general sudo.
+Cmnd_Alias AUTODARTS_OPS = \\
+    /bin/systemctl reboot, \\
+    /bin/systemctl poweroff, \\
+    /usr/bin/systemctl reboot, \\
+    /usr/bin/systemctl poweroff, \\
+    /usr/local/bin/autodarts-self-update, \\
+    /usr/local/bin/autodarts-backup, \\
+    /usr/local/bin/sound-test
+$ACTUAL_USER ALL=(root) NOPASSWD: AUTODARTS_OPS
+EOF
+chmod 0440 "$SUDOERS_FILE"
+visudo -cf "$SUDOERS_FILE" >/dev/null
+
+# 12. Brightness keybinds: Fn keys + LXQt globalkeyshortcuts → xbacklight.
+if ! command -v xbacklight >/dev/null 2>&1; then
+    apt install -y xbacklight
+fi
+GKS="$ACTUAL_HOME/.config/lxqt/globalkeyshortcuts.conf"
+sudo -u "$ACTUAL_USER" mkdir -p "$(dirname "$GKS")"
+[ -f "$GKS" ] || sudo -u "$ACTUAL_USER" touch "$GKS"
+sudo -u "$ACTUAL_USER" sed -i '/^\[AutoDartsBrightness/,/^$/d' "$GKS"
+sudo -u "$ACTUAL_USER" tee -a "$GKS" >/dev/null <<'EOF'
+
+[AutoDartsBrightnessUp]
+Enabled=true
+Comment=Increase screen brightness
+Exec=xbacklight -inc 10
+Shortcut=XF86MonBrightnessUp
+
+[AutoDartsBrightnessDown]
+Enabled=true
+Comment=Decrease screen brightness
+Exec=xbacklight -dec 10
+Shortcut=XF86MonBrightnessDown
+EOF
+
+ad_ok() { printf '\033[32m✓\033[0m %s\n' "$*"; }
+ad_ok "Power button → poweroff; long-press → reboot."
+ad_ok "TTY switching restricted (NAutoVTs=1)."
+ad_ok "ufw active (deny incoming, mDNS + Tailscale allowed)."
+ad_ok "Sudoers lockdown installed: $SUDOERS_FILE"
+ad_ok "Brightness keys bound (XF86MonBrightnessUp/Down)."
+
+echo "Kiosk hardening complete."

@@ -7,23 +7,22 @@ ad_preflight() {
 
     ad_section "Pre-flight checks"
 
-    # OS / Lubuntu detection
-    if [ -r /etc/os-release ]; then
-        . /etc/os-release
-        ad_ok "OS: ${PRETTY_NAME:-unknown}"
+    ad_os_load
+    ad_ok "OS: ${ad_os_pretty:-unknown}"
+    if ad_is_supported_distro; then
+        ad_ok "Distro family: Ubuntu/Debian — supported."
     else
-        ad_warn "/etc/os-release missing — distro unknown."
+        ad_err "Unsupported distro '${ad_os_id:-?}'. This installer assumes Lubuntu/Ubuntu/Debian."
+        fail=1
     fi
 
-    # Internet
-    if curl -fsS --max-time 5 https://dl.google.com/linux/direct/ -o /dev/null; then
+    if ad_retry 3 curl -fsS --max-time 5 https://dl.google.com/linux/direct/ -o /dev/null; then
         ad_ok "Internet reachable."
     else
         ad_err "No internet — installer needs apt + Chrome download."
         fail=1
     fi
 
-    # Disk free (need ~3 GB)
     local free_kb
     free_kb=$(df -k / | awk 'NR==2 {print $4}')
     if [ "${free_kb:-0}" -lt 3145728 ]; then
@@ -33,7 +32,6 @@ ad_preflight() {
         ad_ok "Disk free on /: $((free_kb / 1024)) MB."
     fi
 
-    # GPU
     if lspci 2>/dev/null | grep -Ei 'vga|3d|display' >/dev/null; then
         local gpu
         gpu=$(lspci 2>/dev/null | grep -Ei 'vga|3d|display' | head -1 | cut -d: -f3- | sed 's/^ //')
@@ -42,19 +40,18 @@ ad_preflight() {
         ad_warn "GPU not detected via lspci."
     fi
 
-    # Audio
     if aplay -l 2>/dev/null | grep -q '^card '; then
         ad_ok "ALSA cards present."
     else
         ad_warn "No ALSA cards detected — HDMI audio config may no-op."
     fi
 
-    # Existing AutoDarts install
-    if [ -d "$(ad_actual_home)/autodarts" ] || systemctl list-units 2>/dev/null | grep -q autodarts; then
-        ad_warn "Existing AutoDarts install detected — installer is idempotent but will re-run steps."
+    local home
+    home=$(ad_actual_home)
+    if [ -d "$home/autodarts" ] || systemctl list-units 2>/dev/null | grep -q autodarts; then
+        ad_warn "Existing AutoDarts install detected — installer is idempotent."
     fi
 
-    # Sudo group
     if id -nG "$(ad_actual_user)" | grep -qw sudo; then
         ad_ok "User '$(ad_actual_user)' in sudo group."
     else
@@ -70,7 +67,6 @@ ad_preflight() {
     ad_ok "Pre-flight clean."
 }
 
-# Confirmation prompt with summary; supports AD_AUTOCONFIRM=1 for unattended runs.
 ad_confirm() {
     if [ "${AD_AUTOCONFIRM:-0}" = "1" ]; then
         ad_ok "AD_AUTOCONFIRM=1 — skipping prompt."
@@ -88,8 +84,8 @@ The installer will:
   - Disable screen blanking / sleep / notifications during kiosk use
   - Add desktop shortcuts (Reboot, Shutdown, Sound Test, Open SUIT)
   - Install Ctrl+Alt+Q exit-kiosk hotkey
-  - Schedule weekly config backup + repo self-update
-  - Install autodarts-status command
+  - Schedule weekly config backup + repo self-update via systemd timers
+  - Install autodarts-status command + branded SSH MOTD
 
 EOF
     read -r -p "Proceed? [y/N] " ans </dev/tty || ans=""

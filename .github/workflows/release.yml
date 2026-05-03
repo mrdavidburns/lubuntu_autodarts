@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate changelog from tag range
+        id: changelog
+        run: |
+          prev=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || echo "")
+          if [ -n "$prev" ]; then
+            range="$prev..${GITHUB_REF_NAME}"
+          else
+            range="${GITHUB_REF_NAME}"
+          fi
+          {
+            echo "body<<EOF"
+            git log --pretty=format:'- %s (%h)' "$range"
+            echo
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.body }}
+          generate_release_notes: false

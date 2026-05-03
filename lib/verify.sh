@@ -3,7 +3,8 @@
 # Source — do not execute directly. Requires lib/common.sh.
 
 ad_check() {
-    local label="$1"; shift
+    local label="$1"
+    shift
     if "$@" >/dev/null 2>&1; then
         ad_ok "$label"
     else
@@ -13,8 +14,10 @@ ad_check() {
 
 ad_verify() {
     ad_section "Post-install verification"
-    local home; home=$(ad_actual_home)
-    local user; user=$(ad_actual_user)
+    local home
+    home=$(ad_actual_home)
+    local user
+    user=$(ad_actual_user)
 
     ad_check "Google Chrome installed" command -v google-chrome-stable
     ad_check "AutoDarts installer ran (HOME/autodarts present)" \

@@ -24,12 +24,12 @@ UPDATE_URL="https://clients2.google.com/service/update2/crx"
 
 # Default extensions to force-install. Format: "<id>;<update_url>".
 EXTENSIONS=(
-    "oolfddhehmbpdnlmoljmllcdggmkgihh;$UPDATE_URL"  # Tools for Autodarts
+    "oolfddhehmbpdnlmoljmllcdggmkgihh;$UPDATE_URL" # Tools for Autodarts
 )
 
 # Append optional extras via env var: EXTRA_EXTENSION_IDS="abc,def"
 if [ -n "${EXTRA_EXTENSION_IDS:-}" ]; then
-    IFS=',' read -ra extras <<< "$EXTRA_EXTENSION_IDS"
+    IFS=',' read -ra extras <<<"$EXTRA_EXTENSION_IDS"
     for id in "${extras[@]}"; do
         id=$(echo "$id" | xargs)
         [ -n "$id" ] && EXTENSIONS+=("$id;$UPDATE_URL")
@@ -45,7 +45,7 @@ for entry in "${EXTENSIONS[@]}"; do
     forcelist+="\"$entry\""
 done
 
-cat > "$POLICY_FILE" <<EOF
+cat >"$POLICY_FILE" <<EOF
 {
     "ExtensionInstallForcelist": [$forcelist],
     "ExtensionInstallSources": ["https://clients2.google.com/*", "https://chromewebstore.google.com/*"],

@@ -35,7 +35,7 @@ sudo -u "$ACTUAL_USER" mkdir -p "$USER_BIN" "$AUTOSTART_DIR"
 
 # Helper: pick an HDMI-capable card, set its profile to hdmi-stereo,
 # then set the resulting HDMI sink as the default sink.
-sudo -u "$ACTUAL_USER" tee "$HELPER" > /dev/null <<'EOF'
+sudo -u "$ACTUAL_USER" tee "$HELPER" >/dev/null <<'EOF'
 #!/bin/bash
 # Set Digital Stereo (HDMI) Output as the default PulseAudio sink.
 # Idempotent — safe to run on every login.
@@ -105,7 +105,7 @@ EOF
 sudo -u "$ACTUAL_USER" chmod +x "$HELPER"
 
 # Autostart entry — runs once per login.
-sudo -u "$ACTUAL_USER" tee "$DESKTOP_FILE" > /dev/null <<EOF
+sudo -u "$ACTUAL_USER" tee "$DESKTOP_FILE" >/dev/null <<EOF
 [Desktop Entry]
 Type=Application
 Name=AutoDarts HDMI Audio

@@ -23,7 +23,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 UPDATER="/usr/local/bin/autodarts-self-update"
 LOG="/var/log/autodarts-self-update.log"
-touch "$LOG"; chmod 0644 "$LOG"
+touch "$LOG"
+chmod 0644 "$LOG"
 
 ad_atomic_write "$UPDATER" 0755 root:root <<EOF
 #!/bin/bash
@@ -76,7 +77,11 @@ RandomizedDelaySec=15m
 WantedBy=timers.target
 EOF
 
-systemctl daemon-reload
-systemctl enable --now autodarts-self-update.timer
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload
+    systemctl enable --now autodarts-self-update.timer
+else
+    echo "systemd not running (likely a container) — skip enable."
+fi
 
 ad_ok "Self-update scheduled: Sundays 03:00 (±15m). Log: $LOG"

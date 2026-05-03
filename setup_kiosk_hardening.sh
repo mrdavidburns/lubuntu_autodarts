@@ -29,7 +29,7 @@ fi
 USER_AUTOSTART="$ACTUAL_HOME/.config/autostart"
 sudo -u "$ACTUAL_USER" mkdir -p "$USER_AUTOSTART"
 
-cat > "$USER_AUTOSTART/autodarts-xset.desktop" <<'EOF'
+cat >"$USER_AUTOSTART/autodarts-xset.desktop" <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=AutoDarts X session tweaks
@@ -41,7 +41,7 @@ X-GNOME-Autostart-enabled=true
 EOF
 chown "$ACTUAL_USER:$ACTUAL_USER" "$USER_AUTOSTART/autodarts-xset.desktop"
 
-cat > "$USER_AUTOSTART/unclutter.desktop" <<'EOF'
+cat >"$USER_AUTOSTART/unclutter.desktop" <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=unclutter
@@ -98,7 +98,7 @@ EOF
 # 9. Power button → poweroff (no menu). Players hit it; make it work.
 LOGIND_DROPIN=/etc/systemd/logind.conf.d/00-autodarts.conf
 mkdir -p "$(dirname "$LOGIND_DROPIN")"
-cat > "$LOGIND_DROPIN" <<'EOF'
+cat >"$LOGIND_DROPIN" <<'EOF'
 [Login]
 HandlePowerKey=poweroff
 HandlePowerKeyLongPress=reboot
@@ -128,7 +128,7 @@ ufw --force enable
 
 # 11. Sudoers lockdown: passwordless sudo only for kiosk-relevant commands.
 SUDOERS_FILE=/etc/sudoers.d/10-autodarts-kiosk
-cat > "$SUDOERS_FILE" <<EOF
+cat >"$SUDOERS_FILE" <<EOF
 # Managed by lubuntu_autodarts. Do not edit by hand.
 # Allows the kiosk user to run a small, kiosk-relevant set of root commands
 # without a password. Does NOT grant general sudo.

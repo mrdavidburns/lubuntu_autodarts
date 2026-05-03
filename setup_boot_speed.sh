@@ -28,7 +28,10 @@ LOGIND_TIMEOUTS=/etc/systemd/system.conf.d/00-autodarts-timeouts.conf
 ad_section "Boot speed tuning"
 
 # 1. GRUB — hide menu and zero timeout unless caller opts out.
-[ -f "$GRUB_CFG" ] || { ad_warn "$GRUB_CFG missing — skipping GRUB tweaks"; exit 0; }
+[ -f "$GRUB_CFG" ] || {
+    ad_warn "$GRUB_CFG missing — skipping GRUB tweaks"
+    exit 0
+}
 cp "$GRUB_CFG" "$GRUB_CFG.bak.boot-speed.$(date +%F_%H-%M-%S)"
 
 set_grub_kv() {
@@ -36,7 +39,7 @@ set_grub_kv() {
     if grep -q "^${key}=" "$GRUB_CFG"; then
         sed -i "s|^${key}=.*|${key}=${value}|" "$GRUB_CFG"
     else
-        echo "${key}=${value}" >> "$GRUB_CFG"
+        echo "${key}=${value}" >>"$GRUB_CFG"
     fi
 }
 
@@ -56,7 +59,7 @@ if grep -q '^GRUB_CMDLINE_LINUX_DEFAULT=' "$GRUB_CFG"; then
     merged=$(echo "$cleaned $needed" | tr ' ' '\n' | awk 'NF && !seen[$0]++' | tr '\n' ' ' | sed 's/ $//')
     sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$merged\"|" "$GRUB_CFG"
 else
-    echo "GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash $EXTRAS\"" >> "$GRUB_CFG"
+    echo "GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash $EXTRAS\"" >>"$GRUB_CFG"
 fi
 
 update-grub
@@ -67,7 +70,7 @@ if [ "${AD_BOOT_NO_ZSTD:-0}" != "1" ] && [ -f "$INITRAMFS_CFG" ]; then
     if grep -q '^COMPRESS=' "$INITRAMFS_CFG"; then
         sed -i 's|^COMPRESS=.*|COMPRESS=zstd|' "$INITRAMFS_CFG"
     else
-        echo 'COMPRESS=zstd' >> "$INITRAMFS_CFG"
+        echo 'COMPRESS=zstd' >>"$INITRAMFS_CFG"
     fi
     if grep -q '^COMPRESS_FILE_LIST=' "$INITRAMFS_CFG"; then :; fi
     # Force a rebuild so the change takes effect on next boot.

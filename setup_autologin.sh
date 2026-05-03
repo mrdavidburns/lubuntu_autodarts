@@ -37,7 +37,7 @@ fi
 usermod -aG autologin "$USERNAME"
 
 mkdir -p "$SDDM_CONF_DIR"
-cat > "$CONF_FILE" <<EOF
+cat >"$CONF_FILE" <<EOF
 [Autologin]
 User=$USERNAME
 Session=lxqt.desktop

@@ -108,15 +108,15 @@ install_suit() {
     else
         sudo -u "$ACTUAL_USER" git clone https://github.com/IteraThor/SUIT.git "$suit_dir"
     fi
-    sudo -u "$ACTUAL_USER" git -C "$suit_dir" checkout --quiet "$suit_ref" || \
-        ad_warn "SUIT ref '$suit_ref' not found; staying on current HEAD."
+    sudo -u "$ACTUAL_USER" git -C "$suit_dir" checkout --quiet "$suit_ref" \
+        || ad_warn "SUIT ref '$suit_ref' not found; staying on current HEAD."
     if [ ! -d "$suit_dir/.venv" ]; then
         sudo -u "$ACTUAL_USER" python3 -m venv "$suit_dir/.venv" --system-site-packages
     fi
     if [ -f "$suit_dir/requirements.txt" ]; then
         sudo -u "$ACTUAL_USER" "$suit_dir/.venv/bin/pip" install --upgrade pip
-        sudo -u "$ACTUAL_USER" "$suit_dir/.venv/bin/pip" install -r "$suit_dir/requirements.txt" || \
-            ad_warn "SUIT requirements install failed."
+        sudo -u "$ACTUAL_USER" "$suit_dir/.venv/bin/pip" install -r "$suit_dir/requirements.txt" \
+            || ad_warn "SUIT requirements install failed."
     fi
     if [ -f "$suit_dir/create_launcher.py" ]; then
         sudo -u "$ACTUAL_USER" bash -c "cd '$suit_dir' && '.venv/bin/python' create_launcher.py"
@@ -135,8 +135,8 @@ apply_desktop_customizations() {
         sudo -u "$ACTUAL_USER" cp "$SCRIPT_DIR/images/four-darts-desktop-wallpaper.webp" "$ACTUAL_HOME/Pictures/"
         sudo -u "$ACTUAL_USER" -H pcmanfm-qt \
             --set-wallpaper="$ACTUAL_HOME/Pictures/four-darts-desktop-wallpaper.webp" \
-            --wallpaper-mode=stretch || \
-            ad_warn "pcmanfm-qt wallpaper set failed (likely no DISPLAY at install time — wallpaper will apply on first login)."
+            --wallpaper-mode=stretch \
+            || ad_warn "pcmanfm-qt wallpaper set failed (likely no DISPLAY at install time — wallpaper will apply on first login)."
     fi
 
     if [ -f "$SCRIPT_DIR/images/autodarts_logo.png" ]; then
@@ -162,9 +162,9 @@ ad_step "Apply desktop customizations" apply_desktop_customizations
 # 8. Operator UX: status command, sound test, MOTD, VERSION pin
 install_operator_tools() {
     install -m 0755 "$SCRIPT_DIR/bin/autodarts-status" /usr/local/bin/autodarts-status
-    install -m 0755 "$SCRIPT_DIR/bin/sound-test"        /usr/local/bin/sound-test
-    install -m 0755 "$SCRIPT_DIR/bin/exit-kiosk"        /usr/local/bin/exit-kiosk
-    install -m 0755 "$SCRIPT_DIR/motd/00-autodarts"     /etc/update-motd.d/00-autodarts
+    install -m 0755 "$SCRIPT_DIR/bin/sound-test" /usr/local/bin/sound-test
+    install -m 0755 "$SCRIPT_DIR/bin/exit-kiosk" /usr/local/bin/exit-kiosk
+    install -m 0755 "$SCRIPT_DIR/motd/00-autodarts" /etc/update-motd.d/00-autodarts
     install -d -m 0755 /usr/local/share/autodarts
     install -m 0644 "$SCRIPT_DIR/VERSION" /usr/local/share/autodarts/VERSION
     apt install -y alsa-utils libnotify-bin

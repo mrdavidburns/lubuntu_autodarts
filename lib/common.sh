@@ -36,27 +36,29 @@ ad_run_as_user() {
 
 # Logging — tagged with autodarts so journalctl -t autodarts works.
 ad_log() {
-    local level="$1"; shift
+    local level="$1"
+    shift
     local msg="$*"
     if command -v logger >/dev/null 2>&1; then
         logger -t autodarts -p "user.$level" -- "$msg" || true
     fi
     case "$level" in
-        err)     printf '\033[1;31mERR:\033[0m %s\n'  "$msg" >&2 ;;
+        err) printf '\033[1;31mERR:\033[0m %s\n' "$msg" >&2 ;;
         warning) printf '\033[1;33mWARN:\033[0m %s\n' "$msg" >&2 ;;
-        notice)  printf '\033[1;32m OK:\033[0m %s\n'  "$msg" >&2 ;;
-        info)    printf '\033[1;36m==>\033[0m %s\n'   "$msg" >&2 ;;
-        *)       printf '%s\n' "$msg" >&2 ;;
+        notice) printf '\033[1;32m OK:\033[0m %s\n' "$msg" >&2 ;;
+        info) printf '\033[1;36m==>\033[0m %s\n' "$msg" >&2 ;;
+        *) printf '%s\n' "$msg" >&2 ;;
     esac
 }
-ad_section() { ad_log info    "$*"; }
-ad_ok()      { ad_log notice  "$*"; }
-ad_warn()    { ad_log warning "$*"; }
-ad_err()     { ad_log err     "$*"; }
+ad_section() { ad_log info "$*"; }
+ad_ok() { ad_log notice "$*"; }
+ad_warn() { ad_log warning "$*"; }
+ad_err() { ad_log err "$*"; }
 
 # Run a labelled step. Failure becomes a warning, not a crash.
 ad_step() {
-    local label="$1"; shift
+    local label="$1"
+    shift
     ad_section "$label"
     if "$@"; then
         ad_ok "$label"
@@ -77,7 +79,7 @@ ad_atomic_write() {
     dir=$(dirname "$dest")
     mkdir -p "$dir"
     tmp=$(mktemp "$dir/.autodarts.XXXXXX")
-    cat > "$tmp"
+    cat >"$tmp"
     chmod "$mode" "$tmp"
     chown "$owner" "$tmp"
     mv -f "$tmp" "$dest"
@@ -87,7 +89,8 @@ ad_atomic_write() {
 # flaky kiosk wifi.
 # Usage: ad_retry 5 "$@"
 ad_retry() {
-    local tries="${1:-5}"; shift
+    local tries="${1:-5}"
+    shift
     local delay=2 attempt=1
     while true; do
         if "$@"; then
@@ -111,8 +114,8 @@ ad_wait_apt_lock() {
     local max="${1:-300}"
     local waited=0
     while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 \
-       || fuser /var/lib/dpkg/lock          >/dev/null 2>&1 \
-       || fuser /var/lib/apt/lists/lock     >/dev/null 2>&1; do
+        || fuser /var/lib/dpkg/lock >/dev/null 2>&1 \
+        || fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
         if [ "$waited" -ge "$max" ]; then
             ad_err "timed out waiting for apt lock after ${max}s"
             return 1
@@ -142,7 +145,7 @@ ad_stamp_write() {
     local stamp="$(ad_stamp_dir)/$1"
     local value="$2"
     mkdir -p "$(ad_stamp_dir)"
-    printf '%s\n' "$value" > "$stamp"
+    printf '%s\n' "$value" >"$stamp"
 }
 
 # Print failing line on bash errors. Sourced scripts opt in by:
@@ -177,10 +180,10 @@ ad_os_load() {
 ad_is_supported_distro() {
     ad_os_load
     case "$ad_os_id" in
-        ubuntu|lubuntu|debian) return 0 ;;
+        ubuntu | lubuntu | debian) return 0 ;;
         *)
             case "$ad_os_id_like" in
-                *ubuntu*|*debian*) return 0 ;;
+                *ubuntu* | *debian*) return 0 ;;
                 *) return 1 ;;
             esac
             ;;

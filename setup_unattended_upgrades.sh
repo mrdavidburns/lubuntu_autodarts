@@ -14,7 +14,7 @@ apt update
 apt install -y unattended-upgrades apt-listchanges
 
 # Enable periodic upgrades
-cat > /etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
+cat >/etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
 APT::Periodic::AutocleanInterval "7";
@@ -22,7 +22,7 @@ APT::Periodic::Download-Upgradeable-Packages "1";
 EOF
 
 # AutoDarts-specific overrides: security only, auto reboot at 04:00.
-cat > /etc/apt/apt.conf.d/52autodarts-unattended <<'EOF'
+cat >/etc/apt/apt.conf.d/52autodarts-unattended <<'EOF'
 // Managed by lubuntu_autodarts — overrides 50unattended-upgrades.
 Unattended-Upgrade::Allowed-Origins {
     "${distro_id}:${distro_codename}-security";

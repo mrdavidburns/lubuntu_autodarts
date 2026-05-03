@@ -41,7 +41,7 @@ jobs:
       - name: JSON syntax (Chrome policy template)
         run: |
           # Render the policy via a tmp run that just dumps JSON.
-          out=$(grep -A 200 'cat > "$POLICY_FILE"' setup_chrome_policy.sh \
+          out=$(grep -A 200 'cat >"$POLICY_FILE"' setup_chrome_policy.sh \
                  | sed -n '/<<EOF/,/^EOF$/p' | sed '1d;$d' \
                  | sed 's/\$forcelist/[]/g; s/^\([[:space:]]*\)\$.*/\1/')
           echo "$out" | jq .

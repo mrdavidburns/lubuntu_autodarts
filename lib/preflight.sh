@@ -90,7 +90,10 @@ The installer will:
 EOF
     read -r -p "Proceed? [y/N] " ans </dev/tty || ans=""
     case "$ans" in
-        y|Y|yes|YES) return 0 ;;
-        *) ad_err "Aborted by user."; return 1 ;;
+        y | Y | yes | YES) return 0 ;;
+        *)
+            ad_err "Aborted by user."
+            return 1
+            ;;
     esac
 }

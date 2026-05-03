@@ -12,7 +12,7 @@ echo "Installing Plymouth Theme..."
 
 # 0. Install Plymouth Base Package
 echo "Checking for Plymouth installation..."
-if ! command -v plymouth &> /dev/null; then
+if ! command -v plymouth &>/dev/null; then
     echo "Plymouth not found. Installing plymouth-themes package..."
     sudo apt update
     sudo apt install -y plymouth-themes || {
@@ -28,7 +28,7 @@ fi
 if [ -f "$REPO_DIR/images/autodarts_logo.png" ]; then
     sudo mkdir -p "$THEME_DIR"
     sudo cp "$REPO_DIR/images/autodarts_logo.png" "$THEME_DIR/"
-    
+
     # Check for and copy the watermark image if it exists
     if [ -f "$REPO_DIR/plymouth_theme/images/powered_by_autodarts.png" ]; then
         sudo cp "$REPO_DIR/plymouth_theme/images/powered_by_autodarts.png" "$THEME_DIR/"
@@ -37,7 +37,7 @@ if [ -f "$REPO_DIR/images/autodarts_logo.png" ]; then
         echo "Warning: powered_by_autodarts.png not found. Theme will be logo-only."
         HAS_WATERMARK=0
     fi
-    
+
     # Install .plymouth file
     sudo cp "$REPO_DIR/plymouth_theme/autodarts.plymouth" "$THEME_DIR/"
 
@@ -57,23 +57,23 @@ if [ -f "$REPO_DIR/images/autodarts_logo.png" ]; then
     fi
 
     # Install and Select Theme
-    if command -v update-alternatives &> /dev/null; then
+    if command -v update-alternatives &>/dev/null; then
         echo "Registering AutoDarts theme with update-alternatives..."
         sudo update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth "$THEME_DIR/autodarts.plymouth" 100
-        
+
         echo "Setting AutoDarts as the default Plymouth theme..."
         sudo update-alternatives --set default.plymouth "$THEME_DIR/autodarts.plymouth"
-        
+
         # Verify theme installation
         echo "Verifying theme installation..."
-        if command -v plymouth-set-default-theme &> /dev/null; then
+        if command -v plymouth-set-default-theme &>/dev/null; then
             CURRENT_THEME=$(plymouth-set-default-theme)
             if [ "$CURRENT_THEME" = "autodarts" ]; then
                 echo "✓ AutoDarts theme successfully set as default."
             else
                 echo "Warning: Default theme is '$CURRENT_THEME', expected 'autodarts'."
             fi
-            
+
             # List available themes for confirmation
             echo "Available Plymouth themes:"
             plymouth-set-default-theme -l
@@ -117,7 +117,7 @@ if [ -f "$GRUB_CFG" ]; then
     else
         echo 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"' | sudo tee -a "$GRUB_CFG"
     fi
-    
+
     echo "Updating GRUB..."
     sudo update-grub
 else
@@ -131,7 +131,7 @@ MODULES_FILE="/etc/initramfs-tools/modules"
 if [ -f "$MODULES_FILE" ]; then
     # Add common graphics drivers if not present to ensure they load early
     # This can significantly reduce the black screen time before Plymouth starts
-    
+
     # Helper function to add module if missing
     add_module() {
         if ! grep -q "^$1" "$MODULES_FILE"; then
@@ -141,9 +141,9 @@ if [ -f "$MODULES_FILE" ]; then
 
     # Add standard DRM modules
     add_module "intel_agp"
-    add_module "i915"      # Intel
-    add_module "amdgpu"    # AMD
-    add_module "nouveau"   # Nvidia open source
+    add_module "i915"    # Intel
+    add_module "amdgpu"  # AMD
+    add_module "nouveau" # Nvidia open source
     add_module "drm_kms_helper"
     add_module "drm"
 
@@ -151,7 +151,7 @@ if [ -f "$MODULES_FILE" ]; then
     STAMP_DIR=/var/lib/autodarts
     STAMP_FILE="$STAMP_DIR/plymouth-initramfs.sha256"
     sudo mkdir -p "$STAMP_DIR"
-    HASH=$( {
+    HASH=$({
         find "$THEME_DIR" -type f -print0 | sort -z | xargs -0 sha256sum
         sha256sum "$MODULES_FILE"
     } 2>/dev/null | sha256sum | awk '{print $1}')

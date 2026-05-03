@@ -72,8 +72,12 @@ RandomizedDelaySec=15m
 WantedBy=timers.target
 EOF
 
-systemctl daemon-reload
-systemctl enable --now autodarts-backup.timer
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload
+    systemctl enable --now autodarts-backup.timer
+else
+    echo "systemd not running (likely a container) — skip enable."
+fi
 
 ad_ok "Backup helper installed: $BACKUP_BIN"
 ad_ok "Timer: autodarts-backup.timer (Sundays 03:30, ±15m jitter)."

@@ -14,7 +14,7 @@ AUTODARTS_URL="${AUTODARTS_URL:-https://play.autodarts.io/}"
 
 mkdir -p "$ACTUAL_HOME/.config/autostart"
 
-cat > "$ACTUAL_HOME/.config/autostart/google-chrome-fullscreen.desktop" <<EOF
+cat >"$ACTUAL_HOME/.config/autostart/google-chrome-fullscreen.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Name=AutoDarts (Chrome)

@@ -9,7 +9,7 @@
 
 set -euo pipefail
 
-ACTUAL_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
+ACTUAL_HOME=$(getent passwd "${SUDO_USER:-${USER:-$(id -un)}}" | cut -d: -f6)
 AUTODARTS_URL="${AUTODARTS_URL:-https://play.autodarts.io/}"
 
 mkdir -p "$ACTUAL_HOME/.config/autostart"

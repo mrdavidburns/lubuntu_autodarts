@@ -15,7 +15,7 @@ if [ "$EUID" -ne 0 ]; then
     exec sudo -E "$0" "$@"
 fi
 
-ACTUAL_USER="${SUDO_USER:-$USER}"
+ACTUAL_USER="${SUDO_USER:-${USER:-$(id -un)}}"
 ACTUAL_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck disable=SC1091

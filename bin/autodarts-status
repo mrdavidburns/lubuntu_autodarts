@@ -10,7 +10,7 @@ ok()    { printf '  \033[32m✓\033[0m %s\n' "$*"; }
 warn()  { printf '  \033[33m!\033[0m %s\n' "$*"; }
 fail()  { printf '  \033[31m✗\033[0m %s\n' "$*"; }
 
-USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" 2>/dev/null | cut -d: -f6)
+USER_HOME=$(getent passwd "${SUDO_USER:-${USER:-$(id -un)}}" 2>/dev/null | cut -d: -f6)
 [ -z "$USER_HOME" ] && USER_HOME="$HOME"
 
 VERSION_FILE=/usr/local/share/autodarts/VERSION
@@ -18,7 +18,7 @@ VERSION_FILE=/usr/local/share/autodarts/VERSION
 
 bold "== AutoDarts kiosk status (v$VERSION) =="
 echo "  Host: $(hostnamectl --static 2>/dev/null || hostname)"
-echo "  User: ${SUDO_USER:-$USER}"
+echo "  User: ${SUDO_USER:-${USER:-$(id -un)}}"
 echo "  Date: $(date)"
 [ -r /etc/os-release ] && . /etc/os-release && echo "  OS:   ${PRETTY_NAME:-?}"
 echo

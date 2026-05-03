@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-USERNAME="${1:-${SUDO_USER:-$USER}}"
+USERNAME="${1:-${SUDO_USER:-${USER:-$(id -un)}}}"
 SDDM_CONF_DIR="/etc/sddm.conf.d"
 CONF_FILE="$SDDM_CONF_DIR/10-autodarts-autologin.conf"
 

@@ -18,7 +18,7 @@
 
 set -e
 
-ACTUAL_USER=${SUDO_USER:-$USER}
+ACTUAL_USER=${SUDO_USER:-${USER:-$(id -un)}}
 ACTUAL_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
 
 echo "Installing pavucontrol and PulseAudio utilities..."

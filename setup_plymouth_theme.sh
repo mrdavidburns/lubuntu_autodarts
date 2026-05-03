@@ -2,9 +2,11 @@
 # Part of lubuntu_autodarts - MIT License
 # See LICENSE file for details
 
+set -euo pipefail
+
 # Define paths
 THEME_DIR="/usr/share/plymouth/themes/autodarts"
-REPO_DIR="$(dirname "$0")"
+REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "Installing Plymouth Theme..."
 
@@ -106,24 +108,14 @@ if [ -f "$GRUB_CFG" ]; then
         echo "GRUB_GFXPAYLOAD_LINUX=keep" | sudo tee -a "$GRUB_CFG"
     fi
 
-    # Ensure quiet and splash are in the default command line
-    # This robustly adds 'quiet splash' if they are missing and removes duplicates.
-    if grep -q "GRUB_CMDLINE_LINUX_DEFAULT=" "$GRUB_CFG"; then
-        # Extract the current value, remove existing 'quiet' or 'splash', and then add them back.
-        sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1"/' "$GRUB_CFG" # Remove any quotes to simplify processing
-        current_cmdline=$(grep "GRUB_CMDLINE_LINUX_DEFAULT=" "$GRUB_CFG" | cut -d'"' -f2)
-        
-        # Remove existing 'quiet' and 'splash' to avoid duplicates
-        current_cmdline_cleaned=$(echo "$current_cmdline" | sed -E 's/\b(quiet|splash)\b//g' | xargs)
-        
-        # Add 'quiet splash' to the beginning of the cleaned command line
-        new_cmdline="quiet splash $current_cmdline_cleaned"
-        
-        # Update the GRUB_CMDLINE_LINUX_DEFAULT line
-        sudo sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$(echo $new_cmdline | xargs)\"|" "$GRUB_CFG"
+    # Ensure 'quiet splash' is in GRUB_CMDLINE_LINUX_DEFAULT (deduped).
+    if grep -q "^GRUB_CMDLINE_LINUX_DEFAULT=" "$GRUB_CFG"; then
+        current=$(grep "^GRUB_CMDLINE_LINUX_DEFAULT=" "$GRUB_CFG" | cut -d'"' -f2)
+        cleaned=$(echo "$current" | sed -E 's/\b(quiet|splash)\b//g' | tr -s ' ' | sed 's/^ //;s/ $//')
+        new_cmdline=$(echo "quiet splash $cleaned" | sed 's/ $//')
+        sudo sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$new_cmdline\"|" "$GRUB_CFG"
     else
-        # If the line doesn't exist, add it
-        echo "GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash\"" | sudo tee -a "$GRUB_CFG"
+        echo 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"' | sudo tee -a "$GRUB_CFG"
     fi
     
     echo "Updating GRUB..."

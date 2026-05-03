@@ -23,6 +23,7 @@ This repository provides a complete setup solution for turning a fresh Lubuntu i
   - Quick launch shortcuts for Chrome and QTerminal
   - Auto-hiding taskbar
 - **System Tools**: Installs fastfetch and btop for system monitoring
+- **HDMI Audio**: Installs `pavucontrol` and routes audio to Digital Stereo (HDMI) Output by default
 
 ## Installation
 
@@ -45,9 +46,14 @@ cd lubuntu_autodarts
 chmod +x essentials.sh
 ```
 
-3. Run the setup script:
+3. Run the setup script (it re-execs itself under sudo):
 ```bash
 ./essentials.sh
+```
+
+To point Chrome at a different host, pass `AUTODARTS_URL`:
+```bash
+AUTODARTS_URL=https://my.local/autodarts ./essentials.sh
 ```
 
 4. Reboot your system to see the new Plymouth boot theme:
@@ -64,13 +70,14 @@ The setup script will:
 3. **Configure Autostart** - Sets Chrome to launch fullscreen on login (user-specific, no sudo required)
 4. **Install System Tools** - Adds fastfetch and btop for system monitoring
 5. **Install SUIT** - Installs the Simple UI Toolkit for managing AutoDarts and system settings
-6. **Apply Desktop Customizations**:
+6. **Configure HDMI Audio** - Installs `pavucontrol` + `pulseaudio-utils`, drops a per-user helper and autostart entry that selects the `output:hdmi-stereo` card profile and sets the HDMI sink as default on every login
+7. **Apply Desktop Customizations**:
    - Sets AutoDarts wallpaper
    - Customizes LXQt panel with AutoDarts branding
    - Adds Chrome and QTerminal to quick launch
    - Enables panel auto-hide
-7. **Install GRUB Theme** - Custom bootloader menu with AUTODARTS branding
-8. **Install Plymouth Theme** - Custom boot splash with AutoDarts branding
+8. **Install GRUB Theme** - Custom bootloader menu with AUTODARTS branding
+9. **Install Plymouth Theme** - Custom boot splash with AutoDarts branding (also covers the shutdown screen)
    - Automatically installs `plymouth-themes` package if needed
    - Configures theme files and animations
    - Verifies installation and theme selection
@@ -100,6 +107,18 @@ sudo ./setup_plymouth_theme.sh
 python3 update_quick_launch.py
 ```
 
+### HDMI Audio Only
+```bash
+sudo ./setup_audio_hdmi.sh
+```
+
+### SDDM Autologin Only
+```bash
+sudo ./setup_autologin.sh                 # use $SUDO_USER
+sudo ./setup_autologin.sh autodarts-user  # explicit user
+```
+Installs `pavucontrol`, drops `~/.local/bin/set-hdmi-audio.sh`, and registers a login autostart entry that pins the default sink to `output:hdmi-stereo`.
+
 ## File Structure
 
 ```
@@ -108,6 +127,8 @@ python3 update_quick_launch.py
 ├── setup_chrome_autostart.sh        # Chrome fullscreen autostart config
 ├── setup_grub_theme.sh              # GRUB theme installer
 ├── setup_plymouth_theme.sh          # Plymouth theme installer
+├── setup_audio_hdmi.sh              # pavucontrol + HDMI default sink installer
+├── setup_autologin.sh               # SDDM autologin for kiosk operation
 ├── update_quick_launch.py           # LXQt panel quick launch updater
 ├── images/
 │   ├── autodarts_logo.png          # AutoDarts logo for panel/Plymouth/GRUB

@@ -5,8 +5,10 @@
 # Script to install AUTODARTS GRUB theme
 # Adds branded boot menu to GRUB bootloader
 
+set -euo pipefail
+
 GRUB_THEME_DIR="/boot/grub/themes/autodarts"
-REPO_DIR="$(dirname "$0")"
+REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 GRUB_CFG="/etc/default/grub"
 
 echo "Installing AUTODARTS GRUB theme..."

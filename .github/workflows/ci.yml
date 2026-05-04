@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  # Opt JS-based actions (e.g. actions/checkout) onto Node.js 24.
+  # Node.js 20 is deprecated; default flips on 2026-06-02.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   lint:
     runs-on: ubuntu-24.04

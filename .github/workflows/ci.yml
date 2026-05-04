@@ -14,7 +14,7 @@ jobs:
   lint:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install lint tooling
         run: |
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: lint
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install bats
         run: sudo apt-get update && sudo apt-get install -y bats
       - name: Run unit tests
@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: lint
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Build smoke-test image
         run: docker build -f tests/Dockerfile.smoke -t autodarts-smoke .
       - name: First run (idempotency baseline)

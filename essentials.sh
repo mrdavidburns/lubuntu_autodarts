@@ -161,7 +161,7 @@ while [ "$tries" -lt 20 ]; do
     sleep 0.5
 done
 if pgrep -u "$(id -u)" -f "pcmanfm-qt.*--desktop" >/dev/null 2>&1 \
-    && pcmanfm-qt --set-wallpaper="$HOME/Pictures/winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png" --wallpaper-mode=crop; then
+    && pcmanfm-qt --profile=lxqt --set-wallpaper="$HOME/Pictures/winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png" --wallpaper-mode=crop; then
     rm -f "$HOME/.config/autostart/autodarts-wallpaper.desktop"
 fi
 WALLPAPER
@@ -175,6 +175,17 @@ OnlyShowIn=LXQt;
 DESKTOP
     if [ -f "$SCRIPT_DIR/update_quick_launch.py" ]; then
         sudo -u "$ACTUAL_USER" -H python3 "$SCRIPT_DIR/update_quick_launch.py" || return 1
+    fi
+    local desktop_pid desktop_env desktop_display desktop_xauth
+    desktop_pid=$(pgrep -u "$ACTUAL_USER" -f "pcmanfm-qt.*--desktop" | head -n1 || true)
+    if [ -n "$desktop_pid" ] && [ -r "/proc/$desktop_pid/environ" ]; then
+        desktop_env=$(tr '\0' '\n' <"/proc/$desktop_pid/environ")
+        desktop_display=$(printf '%s\n' "$desktop_env" | sed -n 's/^DISPLAY=//p' | head -n1)
+        desktop_xauth=$(printf '%s\n' "$desktop_env" | sed -n 's/^XAUTHORITY=//p' | head -n1)
+        sudo -u "$ACTUAL_USER" -H \
+            DISPLAY="${desktop_display:-:0}" \
+            ${desktop_xauth:+XAUTHORITY="$desktop_xauth"} \
+            "$user_bin/autodarts-apply-wallpaper" || true
     fi
     echo "Desktop branding will take effect after the next login."
 }

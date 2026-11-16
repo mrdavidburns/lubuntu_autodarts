@@ -25,7 +25,15 @@ def configure_panel(path: Path, icon: str) -> None:
         if not re.search(r'^type\s*=\s*mainmenu\s*$', section, re.MULTILINE):
             continue
         found = True
-        sections[index] = _set_section_keys(section, {"icon": icon, "ownIcon": "true"})
+        sections[index] = _set_section_keys(
+            section,
+            {
+                "icon": icon,
+                "ownIcon": "true",
+                "showText": "true",
+                "text": '" AUTODARTS"',
+            },
+        )
     if not found:
         raise ValueError("No LXQt main menu plugin found in panel.conf")
     updated = ''.join(sections)

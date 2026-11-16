@@ -10,9 +10,9 @@ ad_preflight() {
     ad_os_load
     ad_ok "OS: ${ad_os_pretty:-unknown}"
     if ad_is_supported_distro; then
-        ad_ok "Distro family: Ubuntu/Debian — supported."
+        ad_ok "Distro family: Ubuntu/Debian (.deb) — supported."
     else
-        ad_err "Unsupported distro '${ad_os_id:-?}'. This installer assumes Lubuntu/Ubuntu/Debian."
+        ad_err "Unsupported distro '${ad_os_id:-?}'. This installer supports Ubuntu/Debian (.deb) distributions."
         fail=1
     fi
 

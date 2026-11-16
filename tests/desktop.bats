@@ -55,7 +55,19 @@ EOF
 }
 
 @test "setup_desktop_branding.sh, setup_performance.sh, and setup_grub_theme.sh pass bash -n" {
+    bash -n essentials.sh
+    bash -n setup_autologin.sh
+    bash -n setup_chrome_watchdog.sh
     bash -n setup_desktop_branding.sh
     bash -n setup_performance.sh
     bash -n setup_grub_theme.sh
+}
+
+@test "ad_is_supported_distro accepts debian, linuxmint, pop, and raspbian" {
+    . lib/common.sh
+    for distro in debian linuxmint pop raspbian; do
+        ad_os_load() { ad_os_id="$distro"; ad_os_id_like="debian"; }
+        run ad_is_supported_distro
+        [ "$status" -eq 0 ]
+    done
 }

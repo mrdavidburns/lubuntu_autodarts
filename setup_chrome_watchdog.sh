@@ -12,6 +12,7 @@ set -euo pipefail
 ACTUAL_USER="${SUDO_USER:-${USER:-$(id -un)}}"
 ACTUAL_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
 AUTODARTS_URL="${AUTODARTS_URL:-https://play.autodarts.io/}"
+BROWSER_BIN=$(command -v google-chrome-stable || command -v chromium || command -v chromium-browser || echo "/usr/bin/google-chrome-stable")
 
 UNIT_DIR="$ACTUAL_HOME/.config/systemd/user"
 UNIT="$UNIT_DIR/autodarts-chrome.service"
@@ -27,7 +28,7 @@ After=graphical-session.target
 [Service]
 Type=simple
 ExecStartPre=/bin/sleep 5
-ExecStart=/usr/bin/google-chrome-stable --start-fullscreen --app=$AUTODARTS_URL --no-first-run --disable-features=TranslateUI --disable-session-crashed-bubble --disable-infobars --noerrdialogs --disable-background-timer-throttling --disable-renderer-backgrounding
+ExecStart=$BROWSER_BIN --start-fullscreen --app=$AUTODARTS_URL --no-first-run --disable-features=TranslateUI --disable-session-crashed-bubble --disable-infobars --noerrdialogs --disable-background-timer-throttling --disable-renderer-backgrounding
 Restart=always
 RestartSec=5
 
@@ -46,7 +47,6 @@ sudo -u "$ACTUAL_USER" tee "$AUTOSTART_DIR/autodarts-chrome-watchdog.desktop" >/
 Type=Application
 Name=AutoDarts Chrome watchdog
 Exec=/bin/sh -c "systemctl --user import-environment DISPLAY XAUTHORITY; systemctl --user start autodarts-chrome.service"
-OnlyShowIn=LXQt;
 EOF
 
 # Linger lets the user unit survive logout (fine for kiosks).

@@ -54,10 +54,31 @@ ad_preflight || exit 1
 ad_confirm || exit 1
 
 apt update
-apt install -y curl wget software-properties-common lsb-release ca-certificates
+apt update
+apt install -y curl wget lsb-release ca-certificates
+if apt-cache show software-properties-common >/dev/null 2>&1; then
+    apt install -y software-properties-common
+fi
 
-# 1. Google Chrome — install via Google's signed apt repo (verified by GPG).
+# 1. Google Chrome (amd64) or Chromium (non-amd64) — verified by GPG / apt.
 install_chrome() {
+    local arch
+    arch=$(dpkg --print-architecture 2>/dev/null || echo amd64)
+    if [ "$arch" != "amd64" ]; then
+        if command -v chromium >/dev/null 2>&1 || command -v chromium-browser >/dev/null 2>&1; then
+            echo "Chromium already installed ($arch)."
+            return 0
+        fi
+        if apt-cache show chromium >/dev/null 2>&1; then
+            ad_apt install chromium
+        elif apt-cache show chromium-browser >/dev/null 2>&1; then
+            ad_apt install chromium-browser
+        else
+            ad_err "No supported Chrome/Chromium package found for architecture '$arch'."
+            return 1
+        fi
+        return 0
+    fi
     if command -v google-chrome-stable >/dev/null 2>&1; then
         echo "google-chrome-stable already installed."
         return 0
@@ -75,7 +96,7 @@ EOF
     ad_apt update || return 1
     ad_apt install google-chrome-stable
 }
-ad_step "Install Google Chrome" install_chrome
+ad_step "Install Google Chrome / Chromium" install_chrome
 
 # 2. AutoDarts (run as kiosk user)
 ad_step "Install AutoDarts" \
@@ -95,10 +116,12 @@ install_system_tools() {
     apt install -y btop || return 1
     if apt-cache show fastfetch >/dev/null 2>&1; then
         apt install -y fastfetch
-    else
+    elif [ "${ad_os_id:-}" = "ubuntu" ] && command -v add-apt-repository >/dev/null 2>&1; then
         add-apt-repository -y ppa:zhangsongcui3371/fastfetch || return 1
         apt update || return 1
         apt install -y fastfetch
+    else
+        ad_warn "fastfetch is not available in apt on ${ad_os_id:-this distro}; skipping."
     fi
 }
 ad_step "Install fastfetch + btop" install_system_tools

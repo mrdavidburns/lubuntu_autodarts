@@ -24,6 +24,13 @@ ICON="autodarts-favicon.png"
 USER_BIN="$ACTUAL_HOME/.local/bin"
 AUTOSTART="$ACTUAL_HOME/.config/autostart"
 
+if [ ! -f "$ACTUAL_HOME/.config/lxqt/panel.conf" ] \
+    && [ ! -f /etc/xdg/lubuntu/lxqt/panel.conf ] \
+    && [ ! -f /etc/xdg/lxqt/panel.conf ]; then
+    ad_warn "LXQt panel configuration not found; skipping LXQt desktop branding."
+    exit 0
+fi
+
 sudo -u "$ACTUAL_USER" mkdir -p "$ACTUAL_HOME/Pictures" \
     "$ACTUAL_HOME/.local/share/icons" "$USER_BIN" "$AUTOSTART"
 sudo -u "$ACTUAL_USER" install -m 0644 "$SCRIPT_DIR/images/$WALLPAPER" \

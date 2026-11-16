@@ -151,7 +151,40 @@ if ! command -v xbacklight >/dev/null 2>&1; then
 fi
 GKS="$ACTUAL_HOME/.config/lxqt/globalkeyshortcuts.conf"
 sudo -u "$ACTUAL_USER" mkdir -p "$(dirname "$GKS")"
-[ -f "$GKS" ] || sudo -u "$ACTUAL_USER" touch "$GKS"
+if [ ! -f "$GKS" ]; then
+    for default_gks in \
+        /etc/xdg/xdg-Lubuntu/lxqt/globalkeyshortcuts.conf \
+        /etc/xdg/lubuntu/lxqt/globalkeyshortcuts.conf \
+        /etc/xdg/lxqt/globalkeyshortcuts.conf; do
+        if [ -f "$default_gks" ]; then
+            sudo -u "$ACTUAL_USER" cp "$default_gks" "$GKS"
+            break
+        fi
+    done
+    [ -f "$GKS" ] || sudo -u "$ACTUAL_USER" touch "$GKS"
+fi
+sudo -u "$ACTUAL_USER" python3 - "$GKS" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+sections = re.split(r'(?=^\[[^\]]+\]\s*$)', text, flags=re.MULTILINE)
+changed = False
+for i, section in enumerate(sections):
+    if not re.search(r'^path\s*=\s*/panel/mainmenu/show_hide\s*$', section, re.MULTILINE):
+        continue
+    if re.search(r'^Enabled\s*=.*$', section, re.MULTILINE):
+        updated = re.sub(r'^Enabled\s*=.*$', 'Enabled=false', section, flags=re.MULTILINE)
+    else:
+        updated = section.rstrip() + '\nEnabled=false\n\n'
+    if updated != section:
+        sections[i] = updated
+        changed = True
+if changed:
+    path.write_text(''.join(sections))
+PY
 sudo -u "$ACTUAL_USER" sed -i '/^\[AutoDartsBrightness/,/^$/d' "$GKS"
 sudo -u "$ACTUAL_USER" tee -a "$GKS" >/dev/null <<'EOF'
 

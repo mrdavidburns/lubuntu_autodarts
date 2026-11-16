@@ -67,6 +67,8 @@ Wants=network-online.target
 Type=oneshot
 ExecStart=$UPDATER
 TimeoutStartSec=30m
+Nice=15
+IOSchedulingClass=idle
 EOF
 
 ad_atomic_write /etc/systemd/system/autodarts-self-update.timer 0644 root:root <<'EOF'

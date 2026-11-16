@@ -137,59 +137,7 @@ ad_step "Install SUIT" install_suit
 ad_step "Configure HDMI audio" bash "$SCRIPT_DIR/setup_audio_hdmi.sh"
 
 # 7. Desktop customization
-apply_desktop_customizations() {
-    local wallpaper=winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png
-    local icon=autodarts-favicon.png
-    local user_bin="$ACTUAL_HOME/.local/bin"
-    local autostart="$ACTUAL_HOME/.config/autostart"
-    sudo -u "$ACTUAL_USER" mkdir -p "$ACTUAL_HOME/Pictures" \
-        "$ACTUAL_HOME/.local/share/icons" "$user_bin" "$autostart"
-    sudo -u "$ACTUAL_USER" install -m 0644 "$SCRIPT_DIR/images/$wallpaper" "$ACTUAL_HOME/Pictures/$wallpaper" || return 1
-    sudo -u "$ACTUAL_USER" install -m 0644 "$SCRIPT_DIR/images/$icon" "$ACTUAL_HOME/.local/share/icons/$icon" || return 1
-    sudo -u "$ACTUAL_USER" -H python3 "$SCRIPT_DIR/configure_desktop.py" || return 1
-
-    # Run in the user's graphical session once pcmanfm-qt --desktop is up, then
-    # remove the autostart entry so later user wallpaper changes persist.
-    sudo -u "$ACTUAL_USER" tee "$user_bin/autodarts-apply-wallpaper" >/dev/null <<'WALLPAPER'
-#!/bin/sh
-tries=0
-while [ "$tries" -lt 20 ]; do
-    if pgrep -u "$(id -u)" -f "pcmanfm-qt.*--desktop" >/dev/null 2>&1; then
-        break
-    fi
-    tries=$((tries + 1))
-    sleep 0.5
-done
-if pgrep -u "$(id -u)" -f "pcmanfm-qt.*--desktop" >/dev/null 2>&1 \
-    && pcmanfm-qt --profile=lxqt --set-wallpaper="$HOME/Pictures/winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png" --wallpaper-mode=crop; then
-    rm -f "$HOME/.config/autostart/autodarts-wallpaper.desktop"
-fi
-WALLPAPER
-    chmod 0755 "$user_bin/autodarts-apply-wallpaper"
-    sudo -u "$ACTUAL_USER" tee "$autostart/autodarts-wallpaper.desktop" >/dev/null <<DESKTOP
-[Desktop Entry]
-Type=Application
-Name=Apply Winmau Autodarts wallpaper
-Exec=$user_bin/autodarts-apply-wallpaper
-OnlyShowIn=LXQt;
-DESKTOP
-    if [ -f "$SCRIPT_DIR/update_quick_launch.py" ]; then
-        sudo -u "$ACTUAL_USER" -H python3 "$SCRIPT_DIR/update_quick_launch.py" || return 1
-    fi
-    local desktop_pid desktop_env desktop_display desktop_xauth
-    desktop_pid=$(pgrep -u "$ACTUAL_USER" -f "pcmanfm-qt.*--desktop" | head -n1 || true)
-    if [ -n "$desktop_pid" ] && [ -r "/proc/$desktop_pid/environ" ]; then
-        desktop_env=$(tr '\0' '\n' <"/proc/$desktop_pid/environ")
-        desktop_display=$(printf '%s\n' "$desktop_env" | sed -n 's/^DISPLAY=//p' | head -n1)
-        desktop_xauth=$(printf '%s\n' "$desktop_env" | sed -n 's/^XAUTHORITY=//p' | head -n1)
-        sudo -u "$ACTUAL_USER" -H \
-            DISPLAY="${desktop_display:-:0}" \
-            ${desktop_xauth:+XAUTHORITY="$desktop_xauth"} \
-            "$user_bin/autodarts-apply-wallpaper" || true
-    fi
-    echo "Desktop branding will take effect after the next login."
-}
-ad_step "Apply desktop customizations" apply_desktop_customizations
+ad_step "Apply desktop customizations" bash "$SCRIPT_DIR/setup_desktop_branding.sh"
 
 # 8. Operator UX: status command, sound test, MOTD, VERSION pin
 install_operator_tools() {
@@ -239,6 +187,9 @@ ad_step "Install Plymouth theme" bash "$SCRIPT_DIR/setup_plymouth_theme.sh"
 # 19. Boot/shutdown speed tuning (must run after Plymouth so it can
 # merge into the GRUB cmdline Plymouth set up).
 ad_step "Tune boot/shutdown speed" bash "$SCRIPT_DIR/setup_boot_speed.sh"
+
+# 20. Linux performance & stability tuning (USB camera power, CPU governor, ZRAM, journald)
+ad_step "Tune Linux performance & stability" bash "$SCRIPT_DIR/setup_performance.sh"
 
 # Final verification + summary
 ad_verify

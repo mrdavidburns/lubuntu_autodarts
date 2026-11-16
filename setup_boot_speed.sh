@@ -49,8 +49,9 @@ if [ "${AD_BOOT_KEEP_GRUB:-0}" != "1" ]; then
     set_grub_kv GRUB_RECORDFAIL_TIMEOUT 0
 fi
 
-# 2. Kernel cmdline — quiet boot + suppress udev/Tux/cursor flicker, fast KMS.
-EXTRAS="vt.global_cursor_default=0 logo.nologo udev.log_level=3 i915.fastboot=1 fbcon=nodefer"
+# 2. Kernel cmdline — quiet boot + suppress udev/Tux/cursor flicker, fast KMS,
+#    and disable USB autosuspend for webcams.
+EXTRAS="vt.global_cursor_default=0 logo.nologo udev.log_level=3 i915.fastboot=1 fbcon=nodefer usbcore.autosuspend=-1"
 if grep -q '^GRUB_CMDLINE_LINUX_DEFAULT=' "$GRUB_CFG"; then
     current=$(grep '^GRUB_CMDLINE_LINUX_DEFAULT=' "$GRUB_CFG" | cut -d'"' -f2)
     cleaned=$(echo "$current" | tr ' ' '\n' | awk '!seen[$0]++' | tr '\n' ' ' | sed 's/ $//')

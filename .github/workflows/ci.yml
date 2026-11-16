@@ -41,7 +41,7 @@ jobs:
         run: shfmt -d -i 4 -ci -bn essentials.sh install.sh setup_*.sh lib/*.sh
 
       - name: ruff
-        run: ~/.local/bin/ruff check update_quick_launch.py
+        run: ~/.local/bin/ruff check *.py
 
       - name: JSON syntax (Chrome policy template)
         run: |

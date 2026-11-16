@@ -47,6 +47,7 @@ echo "=== AutoDarts setup run @ $(date -Is) ==="
 
 ACTUAL_USER=$(ad_actual_user)
 ACTUAL_HOME=$(ad_actual_home)
+ad_repair_user_paths "$ACTUAL_USER"
 AUTODARTS_URL="${AUTODARTS_URL:-https://play.autodarts.io/}"
 export AUTODARTS_URL
 

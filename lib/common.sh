@@ -29,6 +29,39 @@ ad_actual_home() {
     ad_home_for "$(ad_actual_user)"
 }
 
+# Repair ownership of paths this installer manages beneath the kiosk user's
+# home. Older releases created some of these as root, which prevents both the
+# upstream AutoDarts installer and our per-user setup steps from replacing
+# their own files on a later run.
+ad_repair_user_paths() {
+    local user="${1:-$(ad_actual_user)}"
+    local home group rel path
+    home=$(ad_home_for "$user") || return 1
+    group=$(id -gn "$user") || return 1
+
+    # Make the parent directories writable by the user when a managed leaf
+    # does not exist yet. Only change ownership of these directories, not all
+    # of ~/.local or ~/.config.
+    for rel in .local .local/opt .local/share .config .config/systemd \
+        .config/pcmanfm-qt; do
+        path="$home/$rel"
+        if [ -d "$path" ]; then
+            chown "$user:$group" "$path"
+        fi
+    done
+
+    # These trees contain installer-managed application/configuration files.
+    # Recursively restore them to the account that owns and runs the kiosk.
+    for rel in .local/bin .local/opt/autodarts .local/share/icons \
+        .config/autostart .config/systemd/user .config/lxqt \
+        .config/pcmanfm-qt Desktop Pictures SUIT; do
+        path="$home/$rel"
+        if [ -e "$path" ]; then
+            chown -R "$user:$group" "$path"
+        fi
+    done
+}
+
 # Run as the actual (non-root) user, with their HOME and DISPLAY.
 ad_run_as_user() {
     local user

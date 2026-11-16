@@ -18,6 +18,7 @@ ACTUAL_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/lib/common.sh"
+ad_repair_user_paths "$ACTUAL_USER"
 
 WALLPAPER="winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png"
 ICON="autodarts-favicon.png"

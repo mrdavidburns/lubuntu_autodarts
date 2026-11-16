@@ -35,7 +35,8 @@ sudo -u "$ACTUAL_USER" mkdir -p "$USER_BIN" "$AUTOSTART_DIR"
 
 # Helper: pick an HDMI-capable card, set its profile to hdmi-stereo,
 # then set the resulting HDMI sink as the default sink.
-sudo -u "$ACTUAL_USER" tee "$HELPER" >/dev/null <<'EOF'
+HELPER_TMP=$(mktemp)
+cat >"$HELPER_TMP" <<'EOF'
 #!/bin/bash
 # Set Digital Stereo (HDMI) Output as the default PulseAudio sink.
 # Idempotent — safe to run on every login.
@@ -102,10 +103,12 @@ else
 fi
 EOF
 
-sudo -u "$ACTUAL_USER" chmod +x "$HELPER"
+install -o "$ACTUAL_USER" -g "$(id -gn "$ACTUAL_USER")" -m 0755 "$HELPER_TMP" "$HELPER"
+rm -f "$HELPER_TMP"
 
 # Autostart entry — runs once per login.
-sudo -u "$ACTUAL_USER" tee "$DESKTOP_FILE" >/dev/null <<EOF
+DESKTOP_TMP=$(mktemp)
+cat >"$DESKTOP_TMP" <<EOF
 [Desktop Entry]
 Type=Application
 Name=AutoDarts HDMI Audio
@@ -115,6 +118,8 @@ Terminal=false
 StartupNotify=false
 X-GNOME-Autostart-enabled=true
 EOF
+install -o "$ACTUAL_USER" -g "$(id -gn "$ACTUAL_USER")" -m 0644 "$DESKTOP_TMP" "$DESKTOP_FILE"
+rm -f "$DESKTOP_TMP"
 
 echo "pavucontrol installed; HDMI audio helper + autostart configured."
 echo "Helper:   $HELPER"

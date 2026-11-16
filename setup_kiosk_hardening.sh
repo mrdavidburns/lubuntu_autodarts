@@ -111,7 +111,9 @@ HandleLidSwitchDocked=ignore
 NAutoVTs=1
 ReserveVT=1
 EOF
-systemctl restart systemd-logind || true
+# Do not restart systemd-logind mid-install: restarting logind revokes seat
+# DRM/input fds and kicks an active X11/LXQt session back to SDDM. Changes
+# apply on the next reboot.
 
 # 10. UFW: block all inbound, allow Tailscale + mDNS if present, allow all outbound.
 if ! command -v ufw >/dev/null 2>&1; then

@@ -41,7 +41,7 @@ def configure_panel(path: Path, icon: str) -> None:
         path.write_text(updated)
 
 
-def configure_wallpaper(path: Path, wallpaper: str, mode: str = "crop") -> None:
+def configure_wallpaper(path: Path, wallpaper: str, mode: str = "stretch") -> None:
     text = path.read_text() if path.exists() else ""
     sections = re.split(r'(?=^\[[^\]]+\]\s*$)', text, flags=re.MULTILINE)
     updates = {"Wallpaper": wallpaper, "WallpaperMode": mode}

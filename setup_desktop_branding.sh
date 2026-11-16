@@ -45,7 +45,7 @@ while [ "\$tries" -lt 20 ]; do
     sleep 0.5
 done
 if pgrep -u "\$(id -u)" -f "pcmanfm-qt.*--desktop" >/dev/null 2>&1 \
-    && pcmanfm-qt --profile=lxqt --set-wallpaper="\$HOME/Pictures/$WALLPAPER" --wallpaper-mode=crop; then
+    && pcmanfm-qt --profile=lxqt --set-wallpaper="\$HOME/Pictures/$WALLPAPER" --wallpaper-mode=stretch; then
     rm -f "\$HOME/.config/autostart/autodarts-wallpaper.desktop"
 fi
 WALLPAPER_SCRIPT

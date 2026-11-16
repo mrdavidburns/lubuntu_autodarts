@@ -16,10 +16,14 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 ACTUAL_USER="${SUDO_USER:-${USER:-$(id -un)}}"
-ACTUAL_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/lib/common.sh"
+
+if ! sudo -u "$ACTUAL_USER" -H git -C "$SCRIPT_DIR" rev-parse --show-toplevel >/dev/null 2>&1; then
+    ad_warn "No Git checkout found; skipping repository self-update."
+    exit 0
+fi
 
 UPDATER="/usr/local/bin/autodarts-self-update"
 LOG="/var/log/autodarts-self-update.log"
@@ -35,18 +39,17 @@ LOG="$LOG"
 {
     echo "=== \$(date -Is) ==="
     cd "\$REPO"
-    git fetch --quiet origin
-    LOCAL=\$(git rev-parse HEAD)
-    REMOTE=\$(git rev-parse @{u} 2>/dev/null || echo "\$LOCAL")
+    sudo -u "$ACTUAL_USER" -H git fetch --quiet origin
+    LOCAL=\$(sudo -u "$ACTUAL_USER" -H git rev-parse HEAD)
+    REMOTE=\$(sudo -u "$ACTUAL_USER" -H git rev-parse '@{u}')
     if [ "\$LOCAL" = "\$REMOTE" ]; then
         echo "No upstream changes."
         exit 0
     fi
     echo "Pulling \$LOCAL → \$REMOTE"
-    git pull --ff-only --quiet
-    chmod +x essentials.sh setup_*.sh install.sh bin/* 2>/dev/null || true
+    sudo -u "$ACTUAL_USER" -H git pull --ff-only --quiet
     echo "Re-running essentials.sh unattended..."
-    AD_AUTOCONFIRM=1 ./essentials.sh
+    SUDO_USER="$ACTUAL_USER" AD_AUTOCONFIRM=1 bash ./essentials.sh
     echo "Self-update finished."
 } >> "\$LOG" 2>&1
 EOF

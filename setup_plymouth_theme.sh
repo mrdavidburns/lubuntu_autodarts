@@ -29,32 +29,25 @@ if [ -f "$REPO_DIR/images/autodarts_logo.png" ]; then
     sudo mkdir -p "$THEME_DIR"
     sudo cp "$REPO_DIR/images/autodarts_logo.png" "$THEME_DIR/"
 
-    # Check for and copy the watermark image if it exists
-    if [ -f "$REPO_DIR/plymouth_theme/images/powered_by_autodarts.png" ]; then
-        sudo cp "$REPO_DIR/plymouth_theme/images/powered_by_autodarts.png" "$THEME_DIR/"
-        HAS_WATERMARK=1
-    else
-        echo "Warning: powered_by_autodarts.png not found. Theme will be logo-only."
-        HAS_WATERMARK=0
+    # The splash requires the wordmark and every animation frame.
+    WATERMARK="$REPO_DIR/plymouth_theme/images/winmau-autodarts-logo-white.png"
+    if [ ! -f "$WATERMARK" ]; then
+        echo "Error: Plymouth wordmark not found: $WATERMARK" >&2
+        exit 1
     fi
-
-    # Install .plymouth file
+    for frame in {01..12}; do
+        if [ ! -f "$REPO_DIR/plymouth_theme/spinner/brand_spinner_${frame}.png" ]; then
+            echo "Error: Plymouth spinner frame $frame is missing." >&2
+            exit 1
+        fi
+    done
+    sudo cp "$WATERMARK" "$THEME_DIR/"
     sudo cp "$REPO_DIR/plymouth_theme/autodarts.plymouth" "$THEME_DIR/"
-
-    # Install .script file
     sudo cp "$REPO_DIR/plymouth_theme/autodarts.script" "$THEME_DIR/"
-
-    # Install spinner images
-    if [ -d "$REPO_DIR/plymouth_theme/spinner" ]; then
-        sudo cp -r "$REPO_DIR/plymouth_theme/spinner" "$THEME_DIR/"
-    else
-        echo "Warning: spinner/ directory not found in plymouth_theme."
-    fi
-
-    if [ "$HAS_WATERMARK" -eq 0 ]; then
-        # Remove watermark lines if watermark image is missing
-        sudo sed -i '/watermark/d' "$THEME_DIR/autodarts.script"
-    fi
+    sudo mkdir -p "$THEME_DIR/spinner"
+    for frame in {01..12}; do
+        sudo cp "$REPO_DIR/plymouth_theme/spinner/brand_spinner_${frame}.png" "$THEME_DIR/spinner/"
+    done
 
     # Install and Select Theme
     if command -v update-alternatives &>/dev/null; then

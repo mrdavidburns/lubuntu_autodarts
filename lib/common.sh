@@ -57,7 +57,7 @@ ad_ok() { ad_log notice "$*"; }
 ad_warn() { ad_log warning "$*"; }
 ad_err() { ad_log err "$*"; }
 
-# Run a labelled step. Failure becomes a warning, not a crash.
+# Run a labelled step and propagate failures to the caller.
 ad_step() {
     local label="$1"
     shift
@@ -65,7 +65,7 @@ ad_step() {
     if "$@"; then
         ad_ok "$label"
     else
-        ad_warn "step '$label' failed (continuing)."
+        ad_err "step '$label' failed; setup stopped."
         return 1
     fi
 }
@@ -131,7 +131,7 @@ ad_wait_apt_lock() {
 
 # Wrap apt operations: wait for lock + retry on transient failures.
 ad_apt() {
-    ad_wait_apt_lock
+    ad_wait_apt_lock || return 1
     ad_retry 4 apt-get -y "$@"
 }
 

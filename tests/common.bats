@@ -24,6 +24,9 @@ setup() {
 }
 
 @test "ad_home_for resolves /etc/passwd home" {
+    if ! command -v getent >/dev/null 2>&1; then
+        skip "getent is available on the supported Linux systems"
+    fi
     home=$(ad_home_for "root")
     [ "$home" = "/root" ] || [ "$home" = "/var/root" ]
 }
@@ -39,6 +42,14 @@ setup() {
     [ "$status" -ne 0 ]
 }
 
+@test "ad_apt stops when the package lock is unavailable" {
+    ad_wait_apt_lock() { return 1; }
+    ad_retry() { echo "apt was invoked"; }
+    run ad_apt update
+    [ "$status" -ne 0 ]
+    [ -z "$output" ]
+}
+
 @test "ad_atomic_write writes content + mode" {
     tmp=$(mktemp -d)
     ad_atomic_write "$tmp/foo" 0644 "$(id -un):$(id -gn)" <<<"hi"
@@ -48,12 +59,13 @@ setup() {
 }
 
 @test "ad_is_supported_distro returns 0 on ubuntu" {
-    cat > /tmp/ad-os-release <<'EOF'
-ID=ubuntu
-ID_LIKE=debian
-VERSION_CODENAME=noble
-PRETTY_NAME="Ubuntu 24.04"
-EOF
-    run bash -c '. lib/common.sh; ID=ubuntu ad_is_supported_distro'
+    ad_os_load() { ad_os_id=ubuntu; ad_os_id_like=debian; }
+    run ad_is_supported_distro
     [ "$status" -eq 0 ]
+}
+
+@test "ad_step propagates failures" {
+    run ad_step "failed operation" false
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"setup stopped"* ]]
 }

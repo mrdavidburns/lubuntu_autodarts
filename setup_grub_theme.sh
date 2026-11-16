@@ -39,11 +39,12 @@ if [ -d "$REPO_DIR/grub_theme" ]; then
         echo "Warning: background.png not found, GRUB theme may not display correctly"
     fi
 
-    if [ -f "$REPO_DIR/grub_theme/autodarts_logo.png" ]; then
-        sudo cp "$REPO_DIR/grub_theme/autodarts_logo.png" "$GRUB_THEME_DIR/"
-        echo "Copied autodarts_logo.png"
+    if [ -f "$REPO_DIR/grub_theme/winmau-autodarts-logo-white.png" ]; then
+        sudo cp "$REPO_DIR/grub_theme/winmau-autodarts-logo-white.png" "$GRUB_THEME_DIR/"
+        echo "Copied Winmau Autodarts logo"
     else
-        echo "Warning: autodarts_logo.png not found"
+        echo "Error: Winmau Autodarts logo not found" >&2
+        exit 1
     fi
 
     # 4. Update GRUB configuration
@@ -58,6 +59,12 @@ if [ -d "$REPO_DIR/grub_theme" ]; then
             sudo sed -i "s|^GRUB_THEME=.*|GRUB_THEME=\"$GRUB_THEME_DIR/theme.txt\"|" "$GRUB_CFG"
         else
             echo "GRUB_THEME=\"$GRUB_THEME_DIR/theme.txt\"" | sudo tee -a "$GRUB_CFG"
+        fi
+
+        # Lubuntu supplies its own theme in grub.d, which is read after
+        # /etc/default/grub. Apply ours last without editing distro files.
+        if [ -d /etc/default/grub.d ]; then
+            echo "GRUB_THEME=\"$GRUB_THEME_DIR/theme.txt\"" | sudo tee /etc/default/grub.d/zz-autodarts-theme.cfg >/dev/null
         fi
 
         # Disable terminal output (use graphical only)

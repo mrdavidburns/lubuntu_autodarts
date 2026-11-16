@@ -16,10 +16,10 @@ ad_preflight() {
         fail=1
     fi
 
-    if ad_retry 3 curl -fsS --max-time 5 https://dl.google.com/linux/direct/ -o /dev/null; then
-        ad_ok "Internet reachable."
+    if ad_retry 3 curl -fsSL --max-time 10 https://dl.google.com/linux/linux_signing_key.pub -o /dev/null; then
+        ad_ok "Google Chrome signing key reachable."
     else
-        ad_err "No internet — installer needs apt + Chrome download."
+        ad_err "Cannot reach Google's Chrome signing key; check connectivity and DNS."
         fail=1
     fi
 

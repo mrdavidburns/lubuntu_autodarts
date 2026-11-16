@@ -2,8 +2,8 @@
 # Part of lubuntu_autodarts - MIT License
 #
 # Replace ~/.config/autostart Chrome entry with a systemd --user service
-# that auto-restarts Chrome if it dies. Pinned to graphical-session.target
-# so it fires on login and rides through crashes.
+# that auto-restarts Chrome if it dies. LXQt starts the service at login,
+# because it does not reliably activate systemd's graphical-session.target.
 #
 # Override the URL with AUTODARTS_URL=https://my.host ./setup_chrome_watchdog.sh
 
@@ -26,7 +26,6 @@ After=graphical-session.target
 
 [Service]
 Type=simple
-Environment=DISPLAY=:0
 ExecStartPre=/bin/sleep 5
 ExecStart=/usr/bin/google-chrome-stable --start-fullscreen --app=$AUTODARTS_URL --no-first-run --disable-features=TranslateUI --disable-session-crashed-bubble --disable-infobars --noerrdialogs
 Restart=always
@@ -38,6 +37,17 @@ EOF
 
 # Drop the old autostart .desktop so the two don't fight.
 rm -f "$ACTUAL_HOME/.config/autostart/google-chrome-fullscreen.desktop"
+
+# Import the actual graphical session environment before launching Chrome.
+AUTOSTART_DIR="$ACTUAL_HOME/.config/autostart"
+sudo -u "$ACTUAL_USER" mkdir -p "$AUTOSTART_DIR"
+sudo -u "$ACTUAL_USER" tee "$AUTOSTART_DIR/autodarts-chrome-watchdog.desktop" >/dev/null <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=AutoDarts Chrome watchdog
+Exec=/bin/sh -c "systemctl --user import-environment DISPLAY XAUTHORITY; systemctl --user start autodarts-chrome.service"
+OnlyShowIn=LXQt;
+EOF
 
 # Linger lets the user unit survive logout (fine for kiosks).
 loginctl enable-linger "$ACTUAL_USER" || true

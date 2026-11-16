@@ -1,10 +1,8 @@
 # Plymouth Script for AutoDarts Animation
 
-# Radial gradient approximation (Native radial not supported in script)
-# Center (Top): R:53 G:86 B:151 -> 0.208, 0.337, 0.592
-# Outer (Bottom): R:48 G:42 B:99 -> 0.188, 0.165, 0.388
-Window.SetBackgroundTopColor(0.208, 0.337, 0.592);
-Window.SetBackgroundBottomColor(0.188, 0.165, 0.388);
+# Match the dark blue GRUB background and the AutoDarts mark.
+Window.SetBackgroundTopColor(0.106, 0.184, 0.310);
+Window.SetBackgroundBottomColor(0.063, 0.102, 0.188);
 
 # --- Screen Dimension Variables ---
 # Used for easier positioning of elements
@@ -13,12 +11,13 @@ screen.h = Window.GetHeight();
 screen.half.w = Window.GetWidth() / 2;
 screen.half.h = Window.GetHeight() / 2;
 
-# --- Animation Configuration ---
-# IMPORTANT: You must extract the GIF frames to PNG files first!
-# Example: ffmpeg -i autodarts_spinner.gif frame_%02d.png
-# Place them in the 'spinner' directory named 'autodarts_spinner_01.png', etc.
+# Keep the mark and spinner comfortably sized on both small and large displays.
+brand_width = screen.w * 0.38;
+if (brand_width > 480) brand_width = 480;
+if (brand_width < 240) brand_width = screen.w * 0.70;
+spinner_width = brand_width * 0.16;
 
-# Set this to the actual number of frames you have
+# Twelve pre-rendered frames keep the activity indicator lightweight.
 total_frames = 12;
 
 # --- State Management ---
@@ -27,12 +26,13 @@ state.status = "play";
 
 # Image file settings
 frame_dir = "spinner/";
-frame_prefix = "autodarts_spinner_";
+frame_prefix = "brand_spinner_";
 frame_suffix = ".png";
 
 # --- Priority: Load and Display First Frame Immediately ---
 # Load ONLY the first frame initially for fastest initial display
-animation_images[1] = Image(frame_dir + frame_prefix + "01" + frame_suffix);
+frame = Image(frame_dir + frame_prefix + "01" + frame_suffix);
+animation_images[1] = frame.Scale(spinner_width, spinner_width);
 
 # --- Sprite Setup (Immediate Display) ---
 spinner_sprite = Sprite();
@@ -43,17 +43,19 @@ spinner_sprite.SetZ(10000);
 
 # Initial centering
 spinner_sprite.SetX(screen.half.w - animation_images[1].GetWidth() / 2);
-spinner_sprite.SetY(screen.half.h - animation_images[1].GetHeight() / 2);
+spinner_sprite.SetY(screen.half.h + 35);
 
 # --- Watermark Setup (Immediate Display) ---
-watermark_image = Image("powered_by_autodarts.png");
+watermark_source = Image("winmau-autodarts-logo-white.png");
+watermark_height = brand_width * watermark_source.GetHeight() / watermark_source.GetWidth();
+watermark_image = watermark_source.Scale(brand_width, watermark_height);
 watermark_sprite = Sprite(watermark_image);
 watermark_sprite.SetOpacity(1);
 watermark_sprite.SetZ(10000);
 
 # Position Watermark relative to Spinner (Above, per original logic)
 watermark_sprite.SetX(screen.half.w - watermark_image.GetWidth() / 2);
-watermark_sprite.SetY(spinner_sprite.GetY() - watermark_image.GetHeight() - 20);
+watermark_sprite.SetY(screen.half.h - watermark_height / 2 - 30);
 
 # --- Password Bullet Setup ---
 # Create bullet image for password entry display
@@ -69,8 +71,9 @@ for (i = 2; i <= total_frames; i++)
     else
       frame_num = i;
       
-    # Construct filename: spinner/autodarts_spinner_02.png, etc.
-    animation_images[i] = Image(frame_dir + frame_prefix + frame_num + frame_suffix);
+    # Construct filename: spinner/brand_spinner_02.png, etc.
+    frame = Image(frame_dir + frame_prefix + frame_num + frame_suffix);
+    animation_images[i] = frame.Scale(spinner_width, spinner_width);
   }
 
 # --- Animation Loop ---
@@ -94,7 +97,7 @@ fun refresh_callback ()
         
         # Re-center (keeps it centered if frames vary slightly in size)
         spinner_sprite.SetX(screen.half.w - current_image.GetWidth() / 2);
-        spinner_sprite.SetY(screen.half.h - current_image.GetHeight() / 2);
+        spinner_sprite.SetY(screen.half.h + 35);
       }
     
     # Ensure sprites remain visible (following reference implementation pattern)

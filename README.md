@@ -16,7 +16,7 @@ This repository provides a complete setup solution for turning a fresh Lubuntu i
 - **SUIT Toolkit**: Installs the Simple UI Toolkit for easy AutoDarts management and system configuration
 - **Complete Boot Branding**: AUTODARTS branding throughout the entire boot process
   - **GRUB Theme**: Custom bootloader menu with AUTODARTS logo and branding
-  - **Plymouth Boot Theme**: Animated boot splash screen with AUTODARTS logo and spinner
+  - **Plymouth Boot Theme**: Winmau Autodarts wordmark and animated spinner for startup and shutdown
   - **Optimized Transitions**: Seamless graphical boot from GRUB through Plymouth to desktop
 - **Desktop Customization**: 
   - AutoDarts wallpaper
@@ -29,7 +29,7 @@ This repository provides a complete setup solution for turning a fresh Lubuntu i
 - **Auto-login + Watchdog**: SDDM autologin, systemd `--user` Chrome service with `Restart=always`, screen-blanking + sleep masked, popups suppressed
 - **Unattended Security Upgrades**: Daily security patches with 04:00 auto-reboot window
 - **Operator UX**: `autodarts-status` health command, `sound-test` HDMI verifier, big-button desktop shortcuts (Reboot, Shutdown, Restart AutoDarts, Open SUIT, Sound Test, Status), `Ctrl+Alt+Q` exit-kiosk hotkey, branded SSH MOTD
-- **Self-healing**: Weekly config backup (`~/Backups`), weekly upstream `git pull` + re-run via systemd timers
+- **Maintenance**: Weekly config backup (`~/Backups`) and weekly upstream `git pull` + re-run via systemd timers
 - **Optional remote support**: Opt-in Tailscale enrollment (`AD_ENABLE_TAILSCALE=1 TS_AUTHKEY=...`)
 - **Observability**: Prometheus textfile metrics for `node_exporter` (`autodarts_up`, `autodarts_hdmi_active`, etc.)
 - **Hardening**: ufw firewall (deny-in, allow mDNS + Tailscale), sudoers lockdown, `NAutoVTs=1`, power button → poweroff, GPG-verified Chrome apt repo, pinned SUIT ref
@@ -276,7 +276,7 @@ After installation:
 ├── update_quick_launch.py           # LXQt panel quick launch updater
 ├── images/
 │   ├── autodarts_logo.png          # AutoDarts logo for panel/Plymouth/GRUB
-│   └── four-darts-desktop-wallpaper.webp  # Desktop wallpaper
+│   └── winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png  # Desktop wallpaper
 ├── grub_theme/
 │   ├── theme.txt                   # GRUB theme configuration
 │   ├── autodarts_logo.png          # Logo for GRUB menu
@@ -295,10 +295,10 @@ After installation:
 ## Customization
 
 ### Changing the Wallpaper
-Replace `images/four-darts-desktop-wallpaper.webp` with your own image before running the setup.
+Replace `images/winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png` with your own PNG before running setup. Desktop branding applies at the next LXQt login.
 
 ### Modifying GRUB Theme
-Edit `grub_theme/theme.txt` to customize colors, layout, and text. Replace `grub_theme/background.png` with your own 1920x1080 image, or modify `grub_theme/create_background.sh` to change how the background is generated.
+Edit `grub_theme/theme.txt` to customize colors, layout, and text. Replace `grub_theme/background.png` with your own 1920x1080 image, or modify `grub_theme/create_background.sh` to change the generated background. Delete a previously generated background before regenerating it.
 
 ### Modifying Plymouth Theme
 Edit `plymouth_theme/autodarts.script` to customize the boot animation, or replace images in `plymouth_theme/images/` and `plymouth_theme/spinner/`.
@@ -380,3 +380,7 @@ Visit [autodarts.io](https://autodarts.io) to learn more about the AutoDarts pro
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 
+
+### Branding assets
+
+The Winmau Autodarts logo and wallpaper are sourced from the [official community assets](https://docs.autodarts.com/community-assets/). Its provider permits personal, non-commercial use; other uses are subject to Autodarts’ terms. These assets are not covered by this repository’s MIT code license.

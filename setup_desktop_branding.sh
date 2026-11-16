@@ -75,9 +75,13 @@ if [ -n "$desktop_pid" ] && [ -r "/proc/$desktop_pid/environ" ]; then
     desktop_env=$(tr '\0' '\n' <"/proc/$desktop_pid/environ")
     desktop_display=$(printf '%s\n' "$desktop_env" | sed -n 's/^DISPLAY=//p' | head -n1)
     desktop_xauth=$(printf '%s\n' "$desktop_env" | sed -n 's/^XAUTHORITY=//p' | head -n1)
+    desktop_runtime=$(printf '%s\n' "$desktop_env" | sed -n 's/^XDG_RUNTIME_DIR=//p' | head -n1)
+    desktop_dbus=$(printf '%s\n' "$desktop_env" | sed -n 's/^DBUS_SESSION_BUS_ADDRESS=//p' | head -n1)
     sudo -u "$ACTUAL_USER" -H \
         DISPLAY="${desktop_display:-:0}" \
         ${desktop_xauth:+XAUTHORITY="$desktop_xauth"} \
+        ${desktop_runtime:+XDG_RUNTIME_DIR="$desktop_runtime"} \
+        ${desktop_dbus:+DBUS_SESSION_BUS_ADDRESS="$desktop_dbus"} \
         "$USER_BIN/autodarts-apply-wallpaper" || true
 fi
 

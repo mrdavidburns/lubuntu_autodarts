@@ -31,6 +31,7 @@ EOF
     grep -q "Wallpaper=$tmp/Pictures/winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png" \
         "$tmp/.config/pcmanfm-qt/lxqt/settings.conf"
     grep -q "WallpaperMode=stretch" "$tmp/.config/pcmanfm-qt/lxqt/settings.conf"
+    grep -q "PerScreenWallpaper=false" "$tmp/.config/pcmanfm-qt/lxqt/settings.conf"
     grep -q "FallbackIconThemeName=Papirus" "$tmp/.config/pcmanfm-qt/lxqt/settings.conf"
     rm -rf "$tmp"
 }

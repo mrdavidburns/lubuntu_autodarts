@@ -19,10 +19,11 @@ This repository provides a complete setup solution for turning a fresh Lubuntu i
   - **Plymouth Boot Theme**: Winmau Autodarts wordmark and animated spinner for startup and shutdown
   - **Optimized Transitions**: Seamless graphical boot from GRUB through Plymouth to desktop
 - **Desktop Customization**: 
-  - AutoDarts wallpaper
-  - Custom panel icon and branding
+  - Winmau AutoDarts wallpaper (`stretch` mode)
+  - AutoDarts favicon and `" AUTODARTS"` label in the LXQt start menu (`configure_desktop.py`)
   - Quick launch shortcuts for Chrome and QTerminal
-  - Auto-hiding taskbar
+- **Performance & Stability**: Disables USB webcam autosuspend, sets CPU `performance` governor when supported, prioritizes the `autodarts` service, caps `systemd-journald` disk usage, and configures ZRAM swap (`setup_performance.sh`)
+- **Broad `.deb` Distro Support**: Supports Ubuntu, Lubuntu (22.04+), Debian, and other `.deb`-based distros, with `chromium` fallback on non-`amd64` architectures and SDDM/LightDM/GDM3 autologin
 - **System Tools**: Installs fastfetch and btop for system monitoring
 - **HDMI Audio**: Installs `pavucontrol` and routes audio to Digital Stereo (HDMI) Output by default
 - **Force-installed Chrome extensions**: [Tools for Autodarts](https://chromewebstore.google.com/detail/tools-for-autodarts/oolfddhehmbpdnlmoljmllcdggmkgihh) deployed via Chrome managed policy
@@ -48,7 +49,7 @@ Clones the repo to `~/lubuntu_autodarts` and runs `essentials.sh`.
 
 ### Prerequisites
 
-- Fresh Lubuntu installation (tested on Lubuntu 22.04+)
+- Fresh Lubuntu, Ubuntu, Debian, or other `.deb`-based Linux installation (tested on Lubuntu 22.04+)
 - Internet connection
 - Sudo privileges
 
@@ -84,7 +85,7 @@ sudo reboot
 
 The setup script will:
 
-1. **Install Google Chrome** - Downloads and installs the latest stable version
+1. **Install Google Chrome / Chromium** - Installs `google-chrome-stable` on `amd64` or `chromium` / `chromium-browser` on non-`amd64` architectures
 2. **Install AutoDarts** - Uses the official AutoDarts installer
 3. **Configure Autostart** - Sets Chrome to launch fullscreen on login (user-specific, no sudo required)
 4. **Install System Tools** - Adds fastfetch and btop for system monitoring
@@ -100,17 +101,19 @@ The setup script will:
 10. **Install Exit Hotkey** — `Ctrl+Alt+Q` stops kiosk Chrome (LXQt globalkeyshortcuts)
 11. **Apply Kiosk Hardening** — disable screen blanking + DPMS, mask sleep targets, install `unclutter` + `fwupd`, lock LXQt panel, suppress update-notifier/snap-store popups, disable Bluetooth, NTP enabled
 12. **Install Desktop Shortcuts** — Restart AutoDarts, Reboot, Shutdown, Open SUIT, Sound Test, Status icons on `~/Desktop`
-13. **Configure SDDM Autologin** — drops `/etc/sddm.conf.d/10-autodarts-autologin.conf`, adds user to `autologin` group
+13. **Configure Display Manager Autologin** — Configures SDDM, LightDM, or GDM3 autologin for the kiosk user
 14. **Configure Unattended Upgrades** — security only, auto-reboot at 04:00
 15. **Configure Weekly Backup** — Sundays 03:30 → tarball of config/SUIT into `~/Backups` (last 4 kept)
 16. **Configure Repo Self-Update** — Sundays 03:00 `git pull` + rerun `essentials.sh` unattended
-17. **Install GRUB Theme** — Custom bootloader menu with AUTODARTS branding
-18. **Install Plymouth Theme** — Custom boot splash with AutoDarts branding (also covers the shutdown screen)
+17. **Install GRUB Theme** — Custom bootloader menu with Winmau AutoDarts branding
+18. **Install Plymouth Theme** — Custom boot splash with Winmau AutoDarts branding (also covers the shutdown screen)
    - Automatically installs `plymouth-themes` package if needed
    - Configures theme files and animations
    - Verifies installation and theme selection
    - Optimizes initramfs for fast graphical boot
-19. **Run Verification** — Prints a tick/cross summary of everything above
+19. **Tune Boot/Shutdown Speed** — Hides GRUB timeout, tunes kernel cmdline (including `usbcore.autosuspend=-1`), enables zstd initramfs, caps systemd stop timeouts
+20. **Tune Linux Performance & Stability** — Disables USB camera autosuspend via udev, sets CPU `performance` governor, boosts `autodarts` service priority, caps `journald`, enables ZRAM swap
+21. **Run Verification** — Prints a tick/cross summary of everything above
 
 All output is also written to `/var/log/autodarts-setup.log` for support.
 
@@ -233,12 +236,14 @@ After installation:
 ├── setup_grub_theme.sh              # GRUB theme installer
 ├── setup_plymouth_theme.sh          # Plymouth theme installer
 ├── setup_audio_hdmi.sh              # pavucontrol + HDMI default sink installer
-├── setup_autologin.sh               # SDDM autologin for kiosk operation
+├── setup_autologin.sh               # SDDM / LightDM / GDM3 autologin for kiosk operation
 ├── setup_chrome_policy.sh           # Chrome managed policy + force-installed extensions
-├── setup_chrome_watchdog.sh         # systemd --user kiosk Chrome service
+├── setup_chrome_watchdog.sh         # systemd --user kiosk Chrome/Chromium service
+├── setup_desktop_branding.sh        # LXQt wallpaper, menu icon/text, quick-launch
 ├── setup_exit_hotkey.sh             # Ctrl+Alt+Q exit-kiosk
 ├── setup_kiosk_hardening.sh         # blanking/sleep/popups/panel-lock
 ├── setup_desktop_shortcuts.sh       # big-button operator launchers
+├── setup_performance.sh             # USB camera power, CPU governor, ZRAM, journald
 ├── setup_unattended_upgrades.sh     # security-only auto upgrades
 ├── setup_backup.sh                  # weekly config backup
 ├── setup_repo_autoupdate.sh         # weekly upstream pull + rerun
@@ -265,6 +270,7 @@ After installation:
 │   └── ISSUE_TEMPLATE/              # bug + feature templates
 ├── tests/
 │   ├── common.bats                  # bats unit tests for lib/
+│   ├── desktop.bats                 # bats tests for desktop branding & distro checks
 │   ├── Dockerfile.smoke             # CI container image
 │   └── smoke-run.sh                 # idempotent CI smoke runner
 └── docs/
@@ -273,23 +279,25 @@ After installation:
     ├── INITRAMFS_INVESTIGATION.md
     ├── PLYMOUTH_VERIFICATION.md
     └── PR_SUMMARY.md
+├── configure_desktop.py             # LXQt main-menu icon/text & pcmanfm-qt wallpaper
 ├── update_quick_launch.py           # LXQt panel quick launch updater
 ├── images/
-│   ├── autodarts_logo.png          # AutoDarts logo for panel/Plymouth/GRUB
+│   ├── autodarts_logo.png           # AutoDarts logo for Plymouth
+│   ├── autodarts-favicon.png        # AutoDarts favicon for LXQt start menu
 │   └── winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png  # Desktop wallpaper
 ├── grub_theme/
-│   ├── theme.txt                   # GRUB theme configuration
-│   ├── autodarts_logo.png          # Logo for GRUB menu
-│   ├── background.png              # GRUB background (generated)
-│   ├── create_background.sh        # Background image generator
-│   └── README.md                   # GRUB theme documentation
+│   ├── theme.txt                    # GRUB theme configuration
+│   ├── winmau-autodarts-logo-white.png  # Winmau AutoDarts logo for GRUB menu
+│   ├── background.png               # GRUB background (generated)
+│   ├── create_background.sh         # Background image generator
+│   └── README.md                    # GRUB theme documentation
 └── plymouth_theme/
     ├── autodarts.plymouth           # Plymouth theme definition
     ├── autodarts.script             # Plymouth animation script
     ├── images/
-    │   └── powered_by_autodarts.png # Boot screen watermark
+    │   └── winmau-autodarts-logo-white.png # Boot screen wordmark
     └── spinner/
-        └── autodarts_spinner_*.png  # Spinner animation frames
+        └── brand_spinner_*.png      # Spinner animation frames
 ```
 
 ## Customization

@@ -6,9 +6,20 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 ### Added
+- Winmau AutoDarts desktop, GRUB, and Plymouth branding (`configure_desktop.py`,
+  `setup_desktop_branding.sh`, `autodarts-favicon.png` start menu icon with
+  `" AUTODARTS"` label, `winmau-autodarts-logo-white.png`, and `brand_spinner_*.png`).
+- `setup_performance.sh`: disables USB camera autosuspend via udev, sets CPU
+  `performance` governor when supported, prioritizes `autodarts.service`
+  (`Nice=-5`, `IOSchedulingClass=best-effort`), caps `systemd-journald` disk
+  usage (`SystemMaxUse=100M`), tunes VM swappiness, and configures `zram-tools`
+  (`zstd`, 50% RAM).
+- `setup_autologin.sh`: added LightDM and GDM3 autologin support alongside SDDM.
+- `tests/desktop.bats`: added unit tests for `configure_desktop.py`, script
+  syntax checks, and `.deb` distro detection.
 - `setup_boot_speed.sh`: zero GRUB timeout (hidden), kernel cmdline
   tuning (`vt.global_cursor_default=0 logo.nologo udev.log_level=3
-  i915.fastboot=1 fbcon=nodefer`), zstd-compressed initramfs,
+  i915.fastboot=1 fbcon=nodefer usbcore.autosuspend=-1`), zstd-compressed initramfs,
   `DefaultTimeoutStopSec=10s` system-wide, `TimeoutStopSec=3` on
   `autodarts-chrome.service`. Disables `NetworkManager-wait-online`,
   `motd-news`, and `apt-daily*` timers (kiosk doesn't need them).
@@ -36,6 +47,13 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
   (replaces `eval echo ~user`), with `$HOME` fallback.
 
 ### Changed
+- Generalized `.deb` distro & architecture support: `chromium`/`chromium-browser`
+  fallback on non-`amd64`, Ubuntu-only guard on the `fastfetch` PPA, and
+  `ruff check *.py` in CI.
+- `setup_chrome_watchdog.sh`: added `--disable-background-timer-throttling` and
+  `--disable-renderer-backgrounding`, plus browser auto-detection.
+- `setup_repo_autoupdate.sh`: runs `autodarts-self-update.service` at `Nice=15`
+  and `IOSchedulingClass=idle`.
 - `shfmt -i 4 -ci -bn` is now the canonical formatter; all shell
   files reformatted accordingly. CI fails the lint job on diff.
 

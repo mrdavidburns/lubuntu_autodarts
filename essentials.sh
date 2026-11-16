@@ -139,7 +139,7 @@ ad_step "Configure HDMI audio" bash "$SCRIPT_DIR/setup_audio_hdmi.sh"
 # 7. Desktop customization
 apply_desktop_customizations() {
     local wallpaper=winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png
-    local icon=winmau-autodarts-menu.png
+    local icon=autodarts-favicon.png
     local user_bin="$ACTUAL_HOME/.local/bin"
     local autostart="$ACTUAL_HOME/.config/autostart"
     sudo -u "$ACTUAL_USER" mkdir -p "$ACTUAL_HOME/Pictures" \
@@ -148,11 +148,20 @@ apply_desktop_customizations() {
     sudo -u "$ACTUAL_USER" install -m 0644 "$SCRIPT_DIR/images/$icon" "$ACTUAL_HOME/.local/share/icons/$icon" || return 1
     sudo -u "$ACTUAL_USER" -H python3 "$SCRIPT_DIR/configure_desktop.py" || return 1
 
-    # Run in the user's graphical session, then remove the autostart entry so
-    # later user wallpaper changes are not overwritten at every login.
+    # Run in the user's graphical session once pcmanfm-qt --desktop is up, then
+    # remove the autostart entry so later user wallpaper changes persist.
     sudo -u "$ACTUAL_USER" tee "$user_bin/autodarts-apply-wallpaper" >/dev/null <<'WALLPAPER'
 #!/bin/sh
-if pcmanfm-qt --set-wallpaper="$HOME/Pictures/winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png" --wallpaper-mode=crop; then
+tries=0
+while [ "$tries" -lt 20 ]; do
+    if pgrep -u "$(id -u)" -f "pcmanfm-qt.*--desktop" >/dev/null 2>&1; then
+        break
+    fi
+    tries=$((tries + 1))
+    sleep 0.5
+done
+if pgrep -u "$(id -u)" -f "pcmanfm-qt.*--desktop" >/dev/null 2>&1 \
+    && pcmanfm-qt --set-wallpaper="$HOME/Pictures/winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png" --wallpaper-mode=crop; then
     rm -f "$HOME/.config/autostart/autodarts-wallpaper.desktop"
 fi
 WALLPAPER
@@ -161,7 +170,7 @@ WALLPAPER
 [Desktop Entry]
 Type=Application
 Name=Apply Winmau Autodarts wallpaper
-Exec="$user_bin/autodarts-apply-wallpaper"
+Exec=$user_bin/autodarts-apply-wallpaper
 OnlyShowIn=LXQt;
 DESKTOP
     if [ -f "$SCRIPT_DIR/update_quick_launch.py" ]; then

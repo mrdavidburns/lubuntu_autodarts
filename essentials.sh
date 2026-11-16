@@ -54,11 +54,10 @@ export AUTODARTS_URL
 ad_preflight || exit 1
 ad_confirm || exit 1
 
-apt update
-apt update
-apt install -y curl wget lsb-release ca-certificates
+ad_apt update
+ad_apt install curl wget lsb-release ca-certificates
 if apt-cache show software-properties-common >/dev/null 2>&1; then
-    apt install -y software-properties-common
+    ad_apt install software-properties-common
 fi
 
 # 1. Google Chrome (amd64) or Chromium (non-amd64) — verified by GPG / apt.
@@ -114,13 +113,13 @@ ad_step "Install Chrome managed policy" bash "$SCRIPT_DIR/setup_chrome_policy.sh
 
 # 4. System tools (fastfetch, btop)
 install_system_tools() {
-    apt install -y btop || return 1
+    ad_apt install btop || return 1
     if apt-cache show fastfetch >/dev/null 2>&1; then
-        apt install -y fastfetch
+        ad_apt install fastfetch
     elif [ "${ad_os_id:-}" = "ubuntu" ] && command -v add-apt-repository >/dev/null 2>&1; then
         add-apt-repository -y ppa:zhangsongcui3371/fastfetch || return 1
-        apt update || return 1
-        apt install -y fastfetch
+        ad_apt update || return 1
+        ad_apt install fastfetch
     else
         ad_warn "fastfetch is not available in apt on ${ad_os_id:-this distro}; skipping."
     fi
@@ -130,7 +129,7 @@ ad_step "Install fastfetch + btop" install_system_tools
 # 5. SUIT inside its own venv. SUIT_REF pins to a specific commit/tag/branch
 # so upstream surprise can't break the kiosk silently. Default: main HEAD.
 install_suit() {
-    apt install -y python3-tk python3-dbus python3-pip python3-venv git libdbus-1-dev || return 1
+    ad_apt install python3-tk python3-dbus python3-pip python3-venv git libdbus-1-dev || return 1
     local suit_dir="$ACTUAL_HOME/SUIT"
     local suit_ref="${SUIT_REF:-main}"
     if [ -d "$suit_dir/.git" ]; then
@@ -171,7 +170,7 @@ install_operator_tools() {
     install -m 0755 "$SCRIPT_DIR/motd/00-autodarts" /etc/update-motd.d/00-autodarts
     install -d -m 0755 /usr/local/share/autodarts
     install -m 0644 "$SCRIPT_DIR/VERSION" /usr/local/share/autodarts/VERSION
-    apt install -y alsa-utils libnotify-bin
+    ad_apt install alsa-utils libnotify-bin
 }
 ad_step "Install operator tools (status, sound-test, MOTD)" install_operator_tools
 

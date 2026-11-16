@@ -5,7 +5,6 @@ import configparser
 import os
 import sys
 
-
 NEW_APPS = [
     "/usr/share/applications/google-chrome.desktop",
     "/usr/share/applications/qterminal.desktop",

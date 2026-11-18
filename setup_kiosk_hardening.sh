@@ -13,6 +13,10 @@ fi
 ACTUAL_USER="${SUDO_USER:-${USER:-$(id -un)}}"
 ACTUAL_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "$SCRIPT_DIR/lib/common.sh"
+DESKTOP=$(ad_desktop "$ACTUAL_USER")
+
 apt update
 apt install -y unclutter xdotool fwupd
 
@@ -88,12 +92,17 @@ if systemctl list-unit-files | grep -q '^bluetooth.service'; then
 fi
 
 # 8. Notifications — DnD via LXQt notification daemon config.
-NOTIFY_CONF="$ACTUAL_HOME/.config/lxqt/notifications.conf"
-sudo -u "$ACTUAL_USER" mkdir -p "$(dirname "$NOTIFY_CONF")"
-sudo -u "$ACTUAL_USER" tee "$NOTIFY_CONF" >/dev/null <<'EOF'
+if [ "$DESKTOP" = lxqt ]; then
+    NOTIFY_CONF="$ACTUAL_HOME/.config/lxqt/notifications.conf"
+    sudo -u "$ACTUAL_USER" mkdir -p "$(dirname "$NOTIFY_CONF")"
+    sudo -u "$ACTUAL_USER" tee "$NOTIFY_CONF" >/dev/null <<'EOF'
 [General]
 DoNotDisturb=true
 EOF
+
+else
+    echo "WARN: Notification suppression is not configured for desktop $DESKTOP." >&2
+fi
 
 # 9. Power button → poweroff (no menu). Players hit it; make it work.
 LOGIND_DROPIN=/etc/systemd/logind.conf.d/00-autodarts.conf
@@ -148,24 +157,25 @@ chmod 0440 "$SUDOERS_FILE"
 visudo -cf "$SUDOERS_FILE" >/dev/null
 
 # 12. Brightness keybinds: Fn keys + LXQt globalkeyshortcuts → xbacklight.
-if ! command -v xbacklight >/dev/null 2>&1; then
-    apt install -y xbacklight
-fi
-GKS="$ACTUAL_HOME/.config/lxqt/globalkeyshortcuts.conf"
-sudo -u "$ACTUAL_USER" mkdir -p "$(dirname "$GKS")"
-if [ ! -f "$GKS" ]; then
-    for default_gks in \
-        /etc/xdg/xdg-Lubuntu/lxqt/globalkeyshortcuts.conf \
-        /etc/xdg/lubuntu/lxqt/globalkeyshortcuts.conf \
-        /etc/xdg/lxqt/globalkeyshortcuts.conf; do
-        if [ -f "$default_gks" ]; then
-            sudo -u "$ACTUAL_USER" cp "$default_gks" "$GKS"
-            break
-        fi
-    done
-    [ -f "$GKS" ] || sudo -u "$ACTUAL_USER" touch "$GKS"
-fi
-sudo -u "$ACTUAL_USER" python3 - "$GKS" <<'PY'
+if [ "$DESKTOP" = lxqt ]; then
+    if ! command -v xbacklight >/dev/null 2>&1; then
+        apt install -y xbacklight
+    fi
+    GKS="$ACTUAL_HOME/.config/lxqt/globalkeyshortcuts.conf"
+    sudo -u "$ACTUAL_USER" mkdir -p "$(dirname "$GKS")"
+    if [ ! -f "$GKS" ]; then
+        for default_gks in \
+            /etc/xdg/xdg-Lubuntu/lxqt/globalkeyshortcuts.conf \
+            /etc/xdg/lubuntu/lxqt/globalkeyshortcuts.conf \
+            /etc/xdg/lxqt/globalkeyshortcuts.conf; do
+            if [ -f "$default_gks" ]; then
+                sudo -u "$ACTUAL_USER" cp "$default_gks" "$GKS"
+                break
+            fi
+        done
+        [ -f "$GKS" ] || sudo -u "$ACTUAL_USER" touch "$GKS"
+    fi
+    sudo -u "$ACTUAL_USER" python3 - "$GKS" <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -187,8 +197,8 @@ for i, section in enumerate(sections):
 if changed:
     path.write_text(''.join(sections))
 PY
-sudo -u "$ACTUAL_USER" sed -i '/^\[AutoDartsBrightness/,/^$/d' "$GKS"
-sudo -u "$ACTUAL_USER" tee -a "$GKS" >/dev/null <<'EOF'
+    sudo -u "$ACTUAL_USER" sed -i '/^\[AutoDartsBrightness/,/^$/d' "$GKS"
+    sudo -u "$ACTUAL_USER" tee -a "$GKS" >/dev/null <<'EOF'
 
 [AutoDartsBrightnessUp]
 Enabled=true
@@ -203,11 +213,15 @@ Exec=xbacklight -dec 10
 Shortcut=XF86MonBrightnessDown
 EOF
 
+else
+    echo "WARN: LXQt brightness shortcuts skipped for desktop $DESKTOP; X11 blanking and cursor settings may not apply to Wayland." >&2
+fi
+
 ad_ok() { printf '\033[32m✓\033[0m %s\n' "$*"; }
 ad_ok "Power button → poweroff; long-press → reboot."
 ad_ok "TTY switching restricted (NAutoVTs=1)."
 ad_ok "ufw active (deny incoming, mDNS + Tailscale allowed)."
 ad_ok "Sudoers lockdown installed: $SUDOERS_FILE"
-ad_ok "Brightness keys bound (XF86MonBrightnessUp/Down)."
+[ "$DESKTOP" != lxqt ] || ad_ok "Brightness keys bound (XF86MonBrightnessUp/Down)."
 
 echo "Kiosk hardening complete."

@@ -35,6 +35,12 @@ This repository provides a complete setup solution for turning a fresh Lubuntu i
 - **Observability**: Prometheus textfile metrics for `node_exporter` (`autodarts_up`, `autodarts_hdmi_active`, etc.)
 - **Hardening**: ufw firewall (deny-in, allow mDNS + Tailscale), sudoers lockdown, `NAutoVTs=1`, power button → poweroff, GPG-verified Chrome apt repo, pinned SUIT ref
 
+## Desktop compatibility
+
+The installer detects a running LXQt, labwc, or Wayfire session for the kiosk user. LXQt retains its existing desktop branding and shortcuts. On labwc, Ctrl+Alt+Q is configured in the user's labwc settings; the wallpaper is copied to Pictures for manual selection. Wayfire and other desktops can run the browser and desktop launchers, but automatic wallpaper, exit hotkey, notification suppression, and brightness shortcuts are not configured. X11 screen-blanking and cursor settings do not control a native Wayland session; configure its compositor's idle settings separately. These desktop paths have not yet been validated on Raspberry Pi hardware.
+
+When installing over SSH or without a running graphical session, select the desktop explicitly, for example `sudo AD_DESKTOP=labwc ./essentials.sh`. Supported values are `lxqt`, `labwc`, and `wayfire`. Reboot or log out and back in after installation. Raspberry Pi firmware boot does not use GRUB, so the GRUB theme is skipped when GRUB is absent.
+
 ## Installation
 
 ### One-line bootstrap

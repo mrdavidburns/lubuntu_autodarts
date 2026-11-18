@@ -19,18 +19,20 @@ ad_verify() {
     local user
     user=$(ad_actual_user)
 
-    ad_check "Google Chrome installed" command -v google-chrome-stable
+    ad_check "Chrome or Chromium installed" bash -c 'command -v google-chrome-stable || command -v chromium || command -v chromium-browser'
     ad_check "AutoDarts installer ran (HOME/autodarts present)" \
         test -d "$home/autodarts"
     ad_check "SUIT cloned" test -d "$home/SUIT/.git"
     ad_check "Plymouth default = autodarts" \
         bash -c 'plymouth-set-default-theme | grep -q "^autodarts$"'
-    ad_check "GRUB theme installed" test -d /boot/grub/themes/autodarts
+    if [ -f /etc/default/grub ]; then
+        ad_check "GRUB theme installed" test -d /boot/grub/themes/autodarts
+    fi
     ad_check "pavucontrol installed" command -v pavucontrol
     ad_check "HDMI helper installed" \
         test -x "$home/.local/bin/set-hdmi-audio.sh"
-    ad_check "SDDM autologin configured" \
-        test -f /etc/sddm.conf.d/10-autodarts-autologin.conf
+    ad_check "Display manager autologin configured" \
+        bash -c 'test -f /etc/sddm.conf.d/10-autodarts-autologin.conf || test -f /etc/lightdm/lightdm.conf.d/10-autodarts-autologin.conf || grep -qs "^AutomaticLoginEnable=True" /etc/gdm3/custom.conf /etc/gdm/custom.conf'
     ad_check "User in autologin group" \
         bash -c "id -nG '$user' | grep -qw autologin"
     ad_check "unattended-upgrades installed" \

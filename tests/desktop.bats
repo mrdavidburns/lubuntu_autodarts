@@ -72,3 +72,18 @@ EOF
         [ "$status" -eq 0 ]
     done
 }
+
+@test "GRUB theme skips before installing or writing when GRUB configuration is absent" {
+    local tmp
+    tmp=$(mktemp -d)
+    mkdir -p "$tmp/bin"
+    sed "s|GRUB_CFG=\"/etc/default/grub\"|GRUB_CFG=\"$tmp/missing-grub\"|" setup_grub_theme.sh > "$tmp/setup_grub_theme.sh"
+    printf '#!/bin/sh\necho called >> "%s"\nexit 1\n' "$tmp/sudo-called" > "$tmp/bin/sudo"
+    printf '#!/bin/sh\nexit 0\n' > "$tmp/bin/update-grub"
+    chmod +x "$tmp/bin/sudo" "$tmp/bin/update-grub"
+    run env PATH="$tmp/bin:$PATH" bash "$tmp/setup_grub_theme.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"GRUB not detected; skipping GRUB theme."* ]]
+    [ ! -e "$tmp/sudo-called" ]
+    rm -rf "$tmp"
+}

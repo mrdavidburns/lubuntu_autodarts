@@ -43,7 +43,9 @@ touch "$LOG"
 chmod 0644 "$LOG"
 exec > >(tee -a "$LOG") 2>&1
 echo
-echo "=== AutoDarts setup run @ $(date -Is) ==="
+echo "------------------------------------------------------------"
+echo "  AUTODARTS SYSTEM SETUP  |  $(date -Is)"
+echo "------------------------------------------------------------"
 
 ACTUAL_USER=$(ad_actual_user)
 ACTUAL_HOME=$(ad_actual_home)
@@ -187,7 +189,7 @@ ad_step "Apply kiosk hardening" bash "$SCRIPT_DIR/setup_kiosk_hardening.sh"
 ad_step "Install desktop shortcuts" bash "$SCRIPT_DIR/setup_desktop_shortcuts.sh"
 
 # 13. SDDM autologin
-ad_step "Configure SDDM autologin" bash "$SCRIPT_DIR/setup_autologin.sh" "$ACTUAL_USER"
+ad_step "Configure display manager autologin" bash "$SCRIPT_DIR/setup_autologin.sh" "$ACTUAL_USER"
 
 # 14. Unattended security upgrades + nightly reboot
 ad_step "Configure unattended-upgrades" bash "$SCRIPT_DIR/setup_unattended_upgrades.sh"
@@ -218,5 +220,7 @@ ad_step "Tune Linux performance & stability" bash "$SCRIPT_DIR/setup_performance
 ad_verify
 
 echo
-echo "=== Setup complete @ $(date -Is) ==="
+echo "------------------------------------------------------------"
+echo "  AUTODARTS SETUP COMPLETE  |  $(date -Is)"
+echo "------------------------------------------------------------"
 echo "Log: $LOG"

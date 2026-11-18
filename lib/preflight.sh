@@ -77,9 +77,9 @@ ad_confirm() {
 The installer will:
   - Install Google Chrome, AutoDarts, SUIT, fastfetch, btop, pavucontrol
   - Configure Chrome to launch fullscreen at $AUTODARTS_URL on login
-  - Install GRUB + Plymouth boot/shutdown themes
+  - Install GRUB (when present) + Plymouth boot/shutdown themes
   - Set Digital Stereo (HDMI) Output as default audio sink
-  - Configure SDDM autologin for user '$(ad_actual_user)'
+  - Configure display manager autologin for user '$(ad_actual_user)'
   - Enable unattended security upgrades + nightly reboot window
   - Disable screen blanking / sleep / notifications during kiosk use
   - Add desktop shortcuts (Reboot, Shutdown, Sound Test, Open SUIT)

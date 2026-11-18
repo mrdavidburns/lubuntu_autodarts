@@ -29,6 +29,36 @@ ad_actual_home() {
     ad_home_for "$(ad_actual_user)"
 }
 
+# Detect the running kiosk desktop; an explicit override helps headless installs.
+ad_desktop() {
+    local user="${1:-$(ad_actual_user)}" hint
+    hint="${AD_DESKTOP:-${XDG_CURRENT_DESKTOP:-}:${XDG_SESSION_DESKTOP:-}}"
+    hint=$(printf '%s' "$hint" | tr '[:upper:]' '[:lower:]')
+    case "$hint" in
+        *labwc* | *raspberry* | *pixel*)
+            echo labwc
+            return
+            ;;
+        *lxqt*)
+            echo lxqt
+            return
+            ;;
+        *wayfire*)
+            echo wayfire
+            return
+            ;;
+    esac
+    if pgrep -u "$user" -x labwc >/dev/null 2>&1; then
+        echo labwc
+    elif pgrep -u "$user" -x wayfire >/dev/null 2>&1; then
+        echo wayfire
+    elif pgrep -u "$user" -x lxqt-session >/dev/null 2>&1; then
+        echo lxqt
+    else
+        echo unknown
+    fi
+}
+
 # Repair ownership of paths this installer manages beneath the kiosk user's
 # home. Older releases created some of these as root, which prevents both the
 # upstream AutoDarts installer and our per-user setup steps from replacing
@@ -94,7 +124,9 @@ ad_err() { ad_log err "$*"; }
 ad_step() {
     local label="$1"
     shift
-    ad_section "$label"
+    AD_STEP_NUMBER=$((${AD_STEP_NUMBER:-0} + 1))
+    printf '\n' >&2
+    ad_section "[$(printf '%02d' "$AD_STEP_NUMBER")] $label"
     if "$@"; then
         ad_ok "$label"
     else

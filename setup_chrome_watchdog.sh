@@ -46,7 +46,7 @@ sudo -u "$ACTUAL_USER" tee "$AUTOSTART_DIR/autodarts-chrome-watchdog.desktop" >/
 [Desktop Entry]
 Type=Application
 Name=AutoDarts Chrome watchdog
-Exec=/bin/sh -c "systemctl --user import-environment DISPLAY XAUTHORITY; systemctl --user start autodarts-chrome.service"
+Exec=/bin/sh -c "systemctl --user import-environment DISPLAY XAUTHORITY WAYLAND_DISPLAY XDG_RUNTIME_DIR XDG_SESSION_TYPE XDG_CURRENT_DESKTOP DBUS_SESSION_BUS_ADDRESS; systemctl --user start autodarts-chrome.service"
 EOF
 
 # Linger lets the user unit survive logout (fine for kiosks).

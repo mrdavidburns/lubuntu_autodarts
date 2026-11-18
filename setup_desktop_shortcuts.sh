@@ -53,12 +53,12 @@ write_shortcut "Restart AutoDarts" \
 
 write_shortcut "Reboot" \
     "Reboot the system" \
-    "lxqt-leave --reboot" \
+    "systemctl reboot" \
     "system-reboot"
 
 write_shortcut "Shutdown" \
     "Power off the system" \
-    "lxqt-leave --shutdown" \
+    "systemctl poweroff" \
     "system-shutdown"
 
 write_shortcut "Open SUIT" \
@@ -73,7 +73,7 @@ write_shortcut "Sound Test" \
 
 write_shortcut "AutoDarts Status" \
     "Show kiosk health summary" \
-    "qterminal -e bash -c 'autodarts-status; read -p \"Press enter to close\"'" \
+    "x-terminal-emulator -e bash -c 'autodarts-status; read -p \"Press enter to close\"'" \
     "utilities-system-monitor"
 
 echo "Desktop shortcuts written under $DESKTOP."

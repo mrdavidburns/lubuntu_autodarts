@@ -11,6 +11,15 @@ GRUB_THEME_DIR="/boot/grub/themes/autodarts"
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 GRUB_CFG="/etc/default/grub"
 
+if [ ! -f "$GRUB_CFG" ]; then
+    echo "GRUB not detected; skipping GRUB theme."
+    exit 0
+fi
+if ! command -v update-grub >/dev/null 2>&1; then
+    echo "Error: GRUB configuration exists but update-grub is unavailable." >&2
+    exit 1
+fi
+
 echo "Installing AUTODARTS GRUB theme..."
 
 # 1. Create GRUB theme directory

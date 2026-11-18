@@ -25,6 +25,14 @@ ICON="autodarts-favicon.png"
 USER_BIN="$ACTUAL_HOME/.local/bin"
 AUTOSTART="$ACTUAL_HOME/.config/autostart"
 
+DESKTOP=$(ad_desktop "$ACTUAL_USER")
+if [ "$DESKTOP" != lxqt ]; then
+    sudo -u "$ACTUAL_USER" mkdir -p "$ACTUAL_HOME/Pictures"
+    sudo -u "$ACTUAL_USER" install -m 0644 "$SCRIPT_DIR/images/$WALLPAPER" "$ACTUAL_HOME/Pictures/$WALLPAPER"
+    ad_warn "Desktop '$DESKTOP': wallpaper copied to Pictures; automatic wallpaper and menu branding are only supported on LXQt."
+    exit 0
+fi
+
 if [ ! -f "$ACTUAL_HOME/.config/lxqt/panel.conf" ] \
     && [ ! -f /etc/xdg/lubuntu/lxqt/panel.conf ] \
     && [ ! -f /etc/xdg/lxqt/panel.conf ]; then

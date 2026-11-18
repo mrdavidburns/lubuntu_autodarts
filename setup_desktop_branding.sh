@@ -26,6 +26,40 @@ USER_BIN="$ACTUAL_HOME/.local/bin"
 AUTOSTART="$ACTUAL_HOME/.config/autostart"
 
 DESKTOP=$(ad_desktop "$ACTUAL_USER")
+if [ "$DESKTOP" = labwc ] && command -v pcmanfm >/dev/null 2>&1 && command -v wf-panel-pi >/dev/null 2>&1; then
+    sudo -u "$ACTUAL_USER" mkdir -p "$ACTUAL_HOME/Pictures" "$ACTUAL_HOME/.local/share/icons" "$USER_BIN" "$AUTOSTART"
+    sudo -u "$ACTUAL_USER" install -m 0644 "$SCRIPT_DIR/images/$WALLPAPER" "$ACTUAL_HOME/Pictures/$WALLPAPER"
+    sudo -u "$ACTUAL_USER" install -m 0644 "$SCRIPT_DIR/images/$ICON" "$ACTUAL_HOME/.local/share/icons/$ICON"
+    sudo -u "$ACTUAL_USER" -H python3 "$SCRIPT_DIR/configure_raspberry_desktop.py"
+    # Apply once from inside the user's next graphical session, when PCManFM
+    # can contact its running desktop instance. Do not override later choices.
+    sudo -u "$ACTUAL_USER" tee "$USER_BIN/autodarts-pi-wallpaper" >/dev/null <<'WALLPAPER_SCRIPT'
+#!/bin/sh
+tries=0
+while [ "$tries" -lt 30 ]; do
+    if pgrep -u "$(id -u)" -x pcmanfm >/dev/null 2>&1; then
+        if pcmanfm --set-wallpaper="$HOME/Pictures/winmau-autodarts-wallpaper-04-navy-spotlight-landscape.png" --wallpaper-mode=stretch; then
+            rm -f "$HOME/.config/autostart/autodarts-pi-wallpaper.desktop"
+            exit 0
+        fi
+    fi
+    tries=$((tries + 1))
+    sleep 1
+done
+exit 1
+WALLPAPER_SCRIPT
+    chmod 0755 "$USER_BIN/autodarts-pi-wallpaper"
+    sudo -u "$ACTUAL_USER" tee "$AUTOSTART/autodarts-pi-wallpaper.desktop" >/dev/null <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Apply Winmau AutoDarts wallpaper
+Exec=$USER_BIN/autodarts-pi-wallpaper
+DESKTOP
+    ad_ok "Raspberry Pi wallpaper and menu icon configured; log out and back in to apply."
+    ad_warn "The Raspberry Pi menu widget does not support a separate text label."
+    exit 0
+fi
+
 if [ "$DESKTOP" != lxqt ]; then
     sudo -u "$ACTUAL_USER" mkdir -p "$ACTUAL_HOME/Pictures"
     sudo -u "$ACTUAL_USER" install -m 0644 "$SCRIPT_DIR/images/$WALLPAPER" "$ACTUAL_HOME/Pictures/$WALLPAPER"

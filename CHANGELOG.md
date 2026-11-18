@@ -6,6 +6,7 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 ### Added
+- Raspberry Pi OS labwc wallpaper and per-user panel icon branding on next login.
 - Install-time kiosk or desktop mode selection, with saved mode reused by unattended updates; both modes apply boot branding, sleep restrictions, and firewall rules.
 - ASCII installer banner, numbered setup steps, and labwc exit shortcut support.
 

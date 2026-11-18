@@ -170,9 +170,7 @@ if [ "$AD_INSTALL_MODE" = kiosk ]; then
 fi
 
 # 7. Desktop customization
-if [ "$AD_INSTALL_MODE" = kiosk ]; then
-    ad_step "Apply desktop customizations" bash "$SCRIPT_DIR/setup_desktop_branding.sh"
-fi
+ad_step "Apply desktop customizations" bash "$SCRIPT_DIR/setup_desktop_branding.sh"
 
 # 8. Operator UX: status command, sound test, MOTD, VERSION pin
 install_operator_tools() {

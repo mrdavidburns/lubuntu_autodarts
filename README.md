@@ -13,10 +13,10 @@ This repository provides a complete setup solution for turning a fresh Lubuntu i
 
 Choose a mode during installation, before the final confirmation:
 
-- **Kiosk (default):** installs the apps and configures fullscreen browser startup, display-manager autologin, HDMI audio, desktop branding, kiosk hardening, unattended security upgrades and boot/performance tuning. Kiosk hardening also changes Bluetooth and the power button. Desktop-specific behavior varies as described below.
+- **Kiosk (default):** installs the apps and configures fullscreen browser startup, display-manager autologin, HDMI audio, kiosk hardening, unattended security upgrades and boot/performance tuning. Kiosk hardening also changes Bluetooth and the power button. Desktop-specific behavior varies as described below.
 - **Desktop:** installs AutoDarts, Chrome or Chromium, SUIT, system and operator tools, plus weekly backup and repository self-update timers. Open AutoDarts in your browser when needed. It skips kiosk-only configuration such as fullscreen browser startup, autologin, forced browser extensions and desktop shortcuts. The upstream AutoDarts installer still creates its system services.
 
-Both modes install GRUB branding when GRUB is present and the Plymouth theme, mask system sleep/hibernate targets, and configure UFW. **The firewall setup resets existing UFW rules**, denies incoming traffic, permits mDNS and Tailscale, and allows outgoing traffic. Both modes can change packages and install services. Selecting desktop on a machine already configured as a kiosk **does not undo prior settings**: existing fullscreen startup, autologin, firewall rules, sleep masks, boot changes and other kiosk settings remain. Use a fresh installation for a desktop without those changes.
+Both modes apply desktop branding on supported desktops, install GRUB branding when GRUB is present and the Plymouth theme, mask system sleep/hibernate targets, and configure UFW. **The firewall setup resets existing UFW rules**, denies incoming traffic, permits mDNS and Tailscale, and allows outgoing traffic. Both modes can change packages and install services. Selecting desktop on a machine already configured as a kiosk **does not undo prior settings**: existing fullscreen startup, autologin, firewall rules, sleep masks, boot changes and other kiosk settings remain. Use a fresh installation for a desktop without those changes.
 
 The choice is saved in `/etc/autodarts/install-mode` and reused by unattended weekly updates. Interactive reruns offer the saved choice as the default. Existing installations with no saved choice retain the kiosk default for unattended updates.
 
@@ -32,7 +32,7 @@ The installer uses Google Chrome on amd64 and Chromium on other architectures if
 
 ## Desktop compatibility
 
-The installer detects a running LXQt, labwc, or Wayfire session for the kiosk user. LXQt retains its existing desktop branding and shortcuts. On labwc, Ctrl+Alt+Q is configured in the user's labwc settings; the wallpaper is copied to Pictures for manual selection. Wayfire and other desktops can run the browser and desktop launchers, but automatic wallpaper, exit hotkey, notification suppression, and brightness shortcuts are not configured. X11 screen-blanking and cursor settings do not control a native Wayland session; configure its compositor's idle settings separately. These desktop paths have not yet been validated on Raspberry Pi hardware.
+The installer detects a running LXQt, labwc, or Wayfire session for the kiosk user. LXQt retains its existing desktop branding and shortcuts. On Raspberry Pi OS with labwc, PCManFM and wf-panel-pi, the wallpaper and menu icon are configured for the next graphical login. The Raspberry Pi menu widget does not support a separate text label, so the AUTODARTS menu text is available only on LXQt. Ctrl+Alt+Q is configured in labwc. Wayfire and other desktops can run the browser and desktop launchers, but automatic wallpaper, menu branding, exit hotkey, notification suppression, and brightness shortcuts are not configured. X11 screen-blanking and cursor settings do not control a native Wayland session; configure its compositor's idle settings separately. These desktop paths have not yet been validated on Raspberry Pi hardware.
 
 When installing over SSH or without a running graphical session, select the desktop explicitly, for example `sudo AD_DESKTOP=labwc ./essentials.sh`. Supported values are `lxqt`, `labwc`, and `wayfire`. Reboot or log out and back in after installation. Raspberry Pi firmware boot does not use GRUB, so the GRUB theme is skipped when GRUB is absent.
 
@@ -95,7 +95,7 @@ A reboot is especially useful in kiosk mode for the boot theme, autologin and au
 
 ### Kiosk setup details
 
-In kiosk mode the setup script performs the following. Desktop mode also runs the shared sleep, firewall, GRUB and Plymouth steps; the remaining kiosk-specific steps below run only in kiosk mode:
+In kiosk mode the setup script performs the following. Desktop mode also runs the shared desktop branding, sleep, firewall, GRUB and Plymouth steps; the remaining kiosk-specific steps below run only in kiosk mode:
 
 1. **Install Google Chrome / Chromium** - Installs `google-chrome-stable` on `amd64` or `chromium` / `chromium-browser` on non-`amd64` architectures
 2. **Install AutoDarts** - Uses the official AutoDarts installer

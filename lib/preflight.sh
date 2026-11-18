@@ -77,14 +77,15 @@ ad_confirm() {
 Installation mode: $AD_INSTALL_MODE
 Both modes install AutoDarts, Chrome/Chromium, SUIT, system tools,
 operator commands, weekly backups and repository self-updates. Both modes
-install GRUB (when present) and Plymouth branding, mask sleep/hibernate,
+configure desktop branding where supported, install GRUB (when present)
+and Plymouth branding, mask sleep/hibernate,
 and reset UFW to deny incoming traffic except mDNS and Tailscale.
 EOF
     if [ "$AD_INSTALL_MODE" = kiosk ]; then
         cat >&2 <<EOF
 
 Kiosk mode also configures fullscreen browser startup, autologin, HDMI
-audio, desktop branding, security upgrades, and kiosk hardening
+audio, security upgrades, and kiosk hardening
 (including Bluetooth and power-button settings).
 Some desktop-specific features depend on the detected session.
 EOF

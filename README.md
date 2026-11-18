@@ -3,37 +3,32 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/mrdavidburns/lubuntu_autodarts/actions/workflows/ci.yml/badge.svg)](https://github.com/mrdavidburns/lubuntu_autodarts/actions/workflows/ci.yml)
 
-Automated setup scripts for configuring a Lubuntu installation as a dedicated AutoDarts system with custom branding and boot experience.
+Automated AutoDarts setup for Debian-based desktop systems, with a choice of kiosk or desktop installation.
 
 ## Purpose
 
 This repository provides a complete setup solution for turning a fresh Lubuntu installation into a dedicated AutoDarts machine. It automates the installation of AutoDarts, configures the desktop environment with AutoDarts branding, and creates a seamless boot-to-game experience.
 
-## Features
+## Installation modes
 
-- **AutoDarts Installation**: Automatically installs the latest AutoDarts software
-- **Google Chrome Auto-launch**: Configures Chrome to start in fullscreen mode on boot
-- **SUIT Toolkit**: Installs the Simple UI Toolkit for easy AutoDarts management and system configuration
-- **Complete Boot Branding**: AUTODARTS branding throughout the entire boot process
-  - **GRUB Theme**: Custom bootloader menu with AUTODARTS logo and branding
-  - **Plymouth Boot Theme**: Winmau Autodarts wordmark and animated spinner for startup and shutdown
-  - **Optimized Transitions**: Seamless graphical boot from GRUB through Plymouth to desktop
-- **Desktop Customization**: 
-  - Winmau AutoDarts wallpaper (`stretch` mode)
-  - AutoDarts favicon and `" AUTODARTS"` label in the LXQt start menu (`configure_desktop.py`)
-  - Quick launch shortcuts for Chrome and QTerminal
-- **Performance & Stability**: Disables USB webcam autosuspend, sets CPU `performance` governor when supported, prioritizes the `autodarts` service, caps `systemd-journald` disk usage, and configures ZRAM swap (`setup_performance.sh`)
-- **Broad `.deb` Distro Support**: Supports Ubuntu, Lubuntu (22.04+), Debian, and other `.deb`-based distros, with `chromium` fallback on non-`amd64` architectures and SDDM/LightDM/GDM3 autologin
-- **System Tools**: Installs fastfetch and btop for system monitoring
-- **HDMI Audio**: Installs `pavucontrol` and routes audio to Digital Stereo (HDMI) Output by default
-- **Force-installed Chrome extensions**: [Tools for Autodarts](https://chromewebstore.google.com/detail/tools-for-autodarts/oolfddhehmbpdnlmoljmllcdggmkgihh) deployed via Chrome managed policy
-- **Auto-login + Watchdog**: SDDM autologin, systemd `--user` Chrome service with `Restart=always`, screen-blanking + sleep masked, popups suppressed
-- **Unattended Security Upgrades**: Daily security patches with 04:00 auto-reboot window
-- **Operator UX**: `autodarts-status` health command, `sound-test` HDMI verifier, big-button desktop shortcuts (Reboot, Shutdown, Restart AutoDarts, Open SUIT, Sound Test, Status), `Ctrl+Alt+Q` exit-kiosk hotkey, branded SSH MOTD
-- **Maintenance**: Weekly config backup (`~/Backups`) and weekly upstream `git pull` + re-run via systemd timers
-- **Optional remote support**: Opt-in Tailscale enrollment (`AD_ENABLE_TAILSCALE=1 TS_AUTHKEY=...`)
-- **Observability**: Prometheus textfile metrics for `node_exporter` (`autodarts_up`, `autodarts_hdmi_active`, etc.)
-- **Hardening**: ufw firewall (deny-in, allow mDNS + Tailscale), sudoers lockdown, `NAutoVTs=1`, power button → poweroff, GPG-verified Chrome apt repo, pinned SUIT ref
+Choose a mode during installation, before the final confirmation:
+
+- **Kiosk (default):** installs the apps and configures fullscreen browser startup, display-manager autologin, HDMI audio, desktop branding, kiosk hardening, unattended security upgrades and boot/performance tuning. Kiosk hardening also changes Bluetooth and the power button. Desktop-specific behavior varies as described below.
+- **Desktop:** installs AutoDarts, Chrome or Chromium, SUIT, system and operator tools, plus weekly backup and repository self-update timers. Open AutoDarts in your browser when needed. It skips kiosk-only configuration such as fullscreen browser startup, autologin, forced browser extensions and desktop shortcuts. The upstream AutoDarts installer still creates its system services.
+
+Both modes install GRUB branding when GRUB is present and the Plymouth theme, mask system sleep/hibernate targets, and configure UFW. **The firewall setup resets existing UFW rules**, denies incoming traffic, permits mDNS and Tailscale, and allows outgoing traffic. Both modes can change packages and install services. Selecting desktop on a machine already configured as a kiosk **does not undo prior settings**: existing fullscreen startup, autologin, firewall rules, sleep masks, boot changes and other kiosk settings remain. Use a fresh installation for a desktop without those changes.
+
+The choice is saved in `/etc/autodarts/install-mode` and reused by unattended weekly updates. Interactive reruns offer the saved choice as the default. Existing installations with no saved choice retain the kiosk default for unattended updates.
+
+## Linux compatibility
+
+| System | Status |
+| --- | --- |
+| Lubuntu 24.04, LXQt | Kiosk installation exercised on a test VM; hardware and individual features can vary. |
+| Raspberry Pi OS (Debian 13 / Trixie, arm64) | Installation was run on a Raspberry Pi 4 but did not complete; the GRUB failure has been addressed in code. Desktop integration and end-to-end operation still need hardware validation. |
+| Other Ubuntu or Debian releases and derivatives | The installer accepts Debian/Ubuntu family systems, but these combinations have not been validated end to end. Package availability, display managers, architecture, and upstream AutoDarts support may limit functionality. |
+
+The installer uses Google Chrome on amd64 and Chromium on other architectures if available. A systemd-based graphical Debian/Ubuntu installation, working network, supported browser packages, sudo access and at least 3 GB free disk space are required. The preflight check is not a guarantee that every distribution or architecture is supported by upstream components. Non-Debian distributions are not supported.
 
 ## Desktop compatibility
 
@@ -51,11 +46,20 @@ curl -fsSL https://raw.githubusercontent.com/mrdavidburns/lubuntu_autodarts/main
 
 Clones the repo to `~/lubuntu_autodarts` and runs `essentials.sh`.
 
+For unattended setup, provide both the mode and confirmation explicitly:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mrdavidburns/lubuntu_autodarts/main/install.sh | AD_KIOSK_MODE=0 AD_AUTOCONFIRM=1 bash
+```
+
+Use `AD_KIOSK_MODE=1` for kiosk mode or `0` for desktop mode. With `AD_AUTOCONFIRM=1` and no explicit mode, the saved mode is used; a machine with no saved mode defaults to kiosk for compatibility. For a manual checkout, run `AD_KIOSK_MODE=0 AD_AUTOCONFIRM=1 ./essentials.sh` instead. Invalid mode values stop the install.
+
+
 ### Manual install
 
 ### Prerequisites
 
-- Fresh Lubuntu, Ubuntu, Debian, or other `.deb`-based Linux installation (tested on Lubuntu 22.04+)
+- A Debian/Ubuntu-family graphical installation; see Linux compatibility above
 - Internet connection
 - Sudo privileges
 
@@ -87,9 +91,11 @@ AUTODARTS_URL=https://my.local/autodarts ./essentials.sh
 sudo reboot
 ```
 
-### What Gets Installed
+A reboot is especially useful in kiosk mode for the boot theme, autologin and audio settings.
 
-The setup script will:
+### Kiosk setup details
+
+In kiosk mode the setup script performs the following. Desktop mode also runs the shared sleep, firewall, GRUB and Plymouth steps; the remaining kiosk-specific steps below run only in kiosk mode:
 
 1. **Install Google Chrome / Chromium** - Installs `google-chrome-stable` on `amd64` or `chromium` / `chromium-browser` on non-`amd64` architectures
 2. **Install AutoDarts** - Uses the official AutoDarts installer
@@ -101,11 +107,10 @@ The setup script will:
    - Sets AutoDarts wallpaper
    - Customizes LXQt panel with AutoDarts branding
    - Adds Chrome and QTerminal to quick launch
-   - Enables panel auto-hide
 8. **Install Operator Tools** — `autodarts-status`, `sound-test`, `exit-kiosk` to `/usr/local/bin`; branded MOTD
 9. **Install Chrome Watchdog** — systemd `--user` service that auto-restarts Chrome on crash
-10. **Install Exit Hotkey** — `Ctrl+Alt+Q` stops kiosk Chrome (LXQt globalkeyshortcuts)
-11. **Apply Kiosk Hardening** — disable screen blanking + DPMS, mask sleep targets, install `unclutter` + `fwupd`, lock LXQt panel, suppress update-notifier/snap-store popups, disable Bluetooth, NTP enabled
+10. **Install Exit Hotkey** — `Ctrl+Alt+Q` stops kiosk Chrome on LXQt or labwc; other desktops require manual setup
+11. **Apply System and Kiosk Hardening** — both modes mask sleep targets and reset/configure UFW; kiosk mode also disables screen blanking + DPMS, install `unclutter` + `fwupd`, lock LXQt panel, suppress update-notifier/snap-store popups, disable Bluetooth, NTP enabled
 12. **Install Desktop Shortcuts** — Restart AutoDarts, Reboot, Shutdown, Open SUIT, Sound Test, Status icons on `~/Desktop`
 13. **Configure Display Manager Autologin** — Configures SDDM, LightDM, or GDM3 autologin for the kiosk user
 14. **Configure Unattended Upgrades** — security only, auto-reboot at 04:00
@@ -119,7 +124,7 @@ The setup script will:
    - Optimizes initramfs for fast graphical boot
 19. **Tune Boot/Shutdown Speed** — Hides GRUB timeout, tunes kernel cmdline (including `usbcore.autosuspend=-1`), enables zstd initramfs, caps systemd stop timeouts
 20. **Tune Linux Performance & Stability** — Disables USB camera autosuspend via udev, sets CPU `performance` governor, boosts `autodarts` service priority, caps `journald`, enables ZRAM swap
-21. **Run Verification** — Prints a tick/cross summary of everything above
+21. **Run Verification** — Prints a summary of selected checks
 
 All output is also written to `/var/log/autodarts-setup.log` for support.
 
@@ -221,7 +226,7 @@ needed.
 
 ## Operator commands
 
-After installation:
+After installation (kiosk-specific commands require kiosk mode):
 
 | Command | What it does |
 |---------|--------------|
@@ -318,11 +323,11 @@ Edit `grub_theme/theme.txt` to customize colors, layout, and text. Replace `grub
 Edit `plymouth_theme/autodarts.script` to customize the boot animation, or replace images in `plymouth_theme/images/` and `plymouth_theme/spinner/`.
 
 ### Panel Configuration
-The panel is configured to auto-hide by default. To change this behavior, modify the `sed` commands in `essentials.sh` around line 61.
+LXQt menu and wallpaper configuration are managed by `configure_desktop.py`. Other desktop sessions have the limitations described above.
 
 ## Boot Sequence
 
-AUTODARTS branding appears throughout the entire boot process:
+On a compatible GRUB/Plymouth system in kiosk mode, branding may appear throughout the boot process:
 
 1. **GRUB Bootloader** (3-5 seconds) - AUTODARTS themed menu with logo
 2. **Kernel Load** (1-2 seconds) - Graphical transition
@@ -330,7 +335,7 @@ AUTODARTS branding appears throughout the entire boot process:
 4. **Plymouth Boot Splash** (5-10 seconds) - Animated AUTODARTS logo with spinner
 5. **Desktop** - AUTODARTS wallpaper and branded panel
 
-Total boot time: ~15-20 seconds on modern hardware with SSD.
+Boot time and theme availability vary by hardware and distribution.
 
 ## Troubleshooting
 
@@ -356,16 +361,10 @@ Total boot time: ~15-20 seconds on modern hardware with SSD.
   ```
 - Verify GRUB settings: `grep GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub` (should include "quiet splash")
 
-### Chrome not auto-launching
-- Check the autostart file exists: `cat ~/.config/autostart/google-chrome-fullscreen.desktop`
-- Log out and log back in
-- Verify Chrome is installed: `which google-chrome-stable`
-
-**Note**: Chrome autostart is configured per-user in `~/.config/autostart/`, not system-wide. This means:
-- No sudo privileges required for setup
-- Configuration affects only the current user
-- Easy to modify or remove without affecting other users
-- Follows LXQt best practices
+### Chrome not auto-launching in kiosk mode
+- Check `~/.config/autostart/autodarts-chrome-watchdog.desktop` and `~/.config/systemd/user/autodarts-chrome.service`.
+- Check `systemctl --user status autodarts-chrome.service`, then log out and back in.
+- Verify that Chrome or Chromium is installed. Desktop mode does not enable browser autostart.
 
 ### Panel customizations not applied
 - The script requires an existing `~/.config/lxqt/panel.conf` file
@@ -373,10 +372,9 @@ Total boot time: ~15-20 seconds on modern hardware with SSD.
 
 ## Requirements
 
-- Lubuntu 22.04 or newer
-- Minimum 2GB RAM
-- Active internet connection during setup
-- Sudo/root access
+- See [Linux compatibility](#linux-compatibility) for tested and unvalidated systems.
+- Active internet connection, a graphical session, systemd, and sudo access.
+- At least 3 GB free disk space on `/`.
 
 ## Attribution
 

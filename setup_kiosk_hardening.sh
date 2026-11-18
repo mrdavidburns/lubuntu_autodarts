@@ -15,13 +15,18 @@ ACTUAL_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/lib/common.sh"
+. "$SCRIPT_DIR/lib/system_hardening.sh"
 DESKTOP=$(ad_desktop "$ACTUAL_USER")
 
-apt update
-apt install -y unclutter xdotool fwupd
+ad_apply_sleep_and_firewall
 
-# 1. Block sleep/suspend/hibernate at the systemd level.
-systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target || true
+if [ "${AD_INSTALL_MODE:-kiosk}" = kiosk ]; then
+    ad_apt update
+    ad_apt install unclutter xdotool fwupd
+else
+    echo "Shared sleep and firewall settings configured for desktop mode."
+    exit 0
+fi
 
 # 2. NTP — Lubuntu uses systemd-timesyncd by default; ensure it's active.
 if systemctl list-unit-files | grep -q '^systemd-timesyncd'; then
@@ -125,17 +130,6 @@ EOF
 # apply on the next reboot.
 
 # 10. UFW: block all inbound, allow Tailscale + mDNS if present, allow all outbound.
-if ! command -v ufw >/dev/null 2>&1; then
-    apt install -y ufw
-fi
-ufw --force reset >/dev/null
-ufw default deny incoming
-ufw default allow outgoing
-# mDNS for AutoDarts board discovery on LAN.
-ufw allow 5353/udp comment "mDNS"
-# Tailscale (only matters if it's installed; rule is harmless otherwise).
-ufw allow in on tailscale0 comment "Tailscale tunnel"
-ufw --force enable
 
 # 11. Sudoers lockdown: passwordless sudo only for kiosk-relevant commands.
 SUDOERS_FILE=/etc/sudoers.d/10-autodarts-kiosk
@@ -220,7 +214,6 @@ fi
 ad_ok() { printf '\033[32m✓\033[0m %s\n' "$*"; }
 ad_ok "Power button → poweroff; long-press → reboot."
 ad_ok "TTY switching restricted (NAutoVTs=1)."
-ad_ok "ufw active (deny incoming, mDNS + Tailscale allowed)."
 ad_ok "Sudoers lockdown installed: $SUDOERS_FILE"
 [ "$DESKTOP" != lxqt ] || ad_ok "Brightness keys bound (XF86MonBrightnessUp/Down)."
 

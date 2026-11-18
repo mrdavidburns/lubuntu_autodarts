@@ -21,7 +21,7 @@ cat <<'BANNER'
   / ____ \| |_| | | || |_| | |_| / ___ \|  _ < | |  ___) |
  /_/    \_\___/  |_| \___/|____/_/   \_\_| \_\|_| |____/
 
-              YOUR AUTODARTS KIOSK SETUP
+              YOUR AUTODARTS SETUP
 BANNER
 if [ -t 1 ] && [ "${TERM:-dumb}" != dumb ] && [ -z "${NO_COLOR:-}" ]; then
     printf '\033[0m'

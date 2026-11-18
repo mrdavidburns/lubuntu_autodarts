@@ -28,17 +28,19 @@ ad_verify() {
     if [ -f /etc/default/grub ]; then
         ad_check "GRUB theme installed" test -d /boot/grub/themes/autodarts
     fi
-    ad_check "pavucontrol installed" command -v pavucontrol
-    ad_check "HDMI helper installed" \
-        test -x "$home/.local/bin/set-hdmi-audio.sh"
-    ad_check "Display manager autologin configured" \
-        bash -c 'test -f /etc/sddm.conf.d/10-autodarts-autologin.conf || test -f /etc/lightdm/lightdm.conf.d/10-autodarts-autologin.conf || grep -qs "^AutomaticLoginEnable=True" /etc/gdm3/custom.conf /etc/gdm/custom.conf'
-    ad_check "User in autologin group" \
-        bash -c "id -nG '$user' | grep -qw autologin"
-    ad_check "unattended-upgrades installed" \
-        dpkg -s unattended-upgrades
-    ad_check "Chrome systemd user unit present" \
-        test -f "$home/.config/systemd/user/autodarts-chrome.service"
+    if [ "${AD_INSTALL_MODE:-kiosk}" = kiosk ]; then
+        ad_check "pavucontrol installed" command -v pavucontrol
+        ad_check "HDMI helper installed" \
+            test -x "$home/.local/bin/set-hdmi-audio.sh"
+        ad_check "Display manager autologin configured" \
+            bash -c 'test -f /etc/sddm.conf.d/10-autodarts-autologin.conf || test -f /etc/lightdm/lightdm.conf.d/10-autodarts-autologin.conf || grep -qs "^AutomaticLoginEnable=True" /etc/gdm3/custom.conf /etc/gdm/custom.conf'
+        ad_check "User in autologin group" \
+            bash -c "id -nG '$user' | grep -qw autologin"
+        ad_check "unattended-upgrades installed" \
+            dpkg -s unattended-upgrades
+        ad_check "Chrome systemd user unit present" \
+            test -f "$home/.config/systemd/user/autodarts-chrome.service"
+    fi
     ad_check "autodarts-status on PATH" command -v autodarts-status
     ad_check "backup timer enabled" \
         systemctl is-enabled autodarts-backup.timer
@@ -52,8 +54,6 @@ ad_verify() {
     fi
 
     echo
-    cat >&2 <<EOF
-Reboot to apply boot themes, autologin, and audio routing.
-After reboot, run:  autodarts-status
-EOF
+    echo "Reboot to apply boot branding and system settings." >&2
+    echo "Run: autodarts-status" >&2
 }

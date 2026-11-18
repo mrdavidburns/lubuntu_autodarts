@@ -32,6 +32,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/lib/preflight.sh"
 # shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/mode.sh"
+# shellcheck disable=SC1091
 . "$SCRIPT_DIR/lib/verify.sh"
 
 trap 'ad_on_err $LINENO $? "$BASH_COMMAND"' ERR
@@ -54,7 +56,9 @@ AUTODARTS_URL="${AUTODARTS_URL:-https://play.autodarts.io/}"
 export AUTODARTS_URL
 
 ad_preflight || exit 1
+ad_select_mode || exit 1
 ad_confirm || exit 1
+printf '%s\n' "$AD_INSTALL_MODE" | ad_atomic_write /etc/autodarts/install-mode 0644 root:root
 
 ad_apt update
 ad_apt install curl wget lsb-release ca-certificates
@@ -111,7 +115,9 @@ ad_step "Install AutoDarts" \
     '
 
 # 3. Chrome managed-policy + force-installed extensions
-ad_step "Install Chrome managed policy" bash "$SCRIPT_DIR/setup_chrome_policy.sh"
+if [ "$AD_INSTALL_MODE" = kiosk ]; then
+    ad_step "Install Chrome managed policy" bash "$SCRIPT_DIR/setup_chrome_policy.sh"
+fi
 
 # 4. System tools (fastfetch, btop)
 install_system_tools() {
@@ -159,10 +165,14 @@ install_suit() {
 ad_step "Install SUIT" install_suit
 
 # 6. Audio
-ad_step "Configure HDMI audio" bash "$SCRIPT_DIR/setup_audio_hdmi.sh"
+if [ "$AD_INSTALL_MODE" = kiosk ]; then
+    ad_step "Configure HDMI audio" bash "$SCRIPT_DIR/setup_audio_hdmi.sh"
+fi
 
 # 7. Desktop customization
-ad_step "Apply desktop customizations" bash "$SCRIPT_DIR/setup_desktop_branding.sh"
+if [ "$AD_INSTALL_MODE" = kiosk ]; then
+    ad_step "Apply desktop customizations" bash "$SCRIPT_DIR/setup_desktop_branding.sh"
+fi
 
 # 8. Operator UX: status command, sound test, MOTD, VERSION pin
 install_operator_tools() {
@@ -176,23 +186,25 @@ install_operator_tools() {
 }
 ad_step "Install operator tools (status, sound-test, MOTD)" install_operator_tools
 
-# 9. Chrome watchdog (systemd --user, replaces autostart .desktop)
-ad_step "Install Chrome watchdog" bash "$SCRIPT_DIR/setup_chrome_watchdog.sh"
+if [ "$AD_INSTALL_MODE" = kiosk ]; then
+    # 9. Chrome watchdog (systemd --user, replaces autostart .desktop)
+    ad_step "Install Chrome watchdog" bash "$SCRIPT_DIR/setup_chrome_watchdog.sh"
 
-# 10. Exit hotkey (Ctrl+Alt+Q)
-ad_step "Install exit hotkey" bash "$SCRIPT_DIR/setup_exit_hotkey.sh"
+    # 10. Exit hotkey (Ctrl+Alt+Q)
+    ad_step "Install exit hotkey" bash "$SCRIPT_DIR/setup_exit_hotkey.sh"
 
-# 11. Kiosk hardening (blanking, sleep, popups, panel lock, BT, fwupd, NTP)
-ad_step "Apply kiosk hardening" bash "$SCRIPT_DIR/setup_kiosk_hardening.sh"
+    # 12. Desktop shortcuts (Reboot, Shutdown, Sound Test, Status, SUIT)
+    ad_step "Install desktop shortcuts" bash "$SCRIPT_DIR/setup_desktop_shortcuts.sh"
 
-# 12. Desktop shortcuts (Reboot, Shutdown, Sound Test, Status, SUIT)
-ad_step "Install desktop shortcuts" bash "$SCRIPT_DIR/setup_desktop_shortcuts.sh"
+    # 13. SDDM autologin
+    ad_step "Configure display manager autologin" bash "$SCRIPT_DIR/setup_autologin.sh" "$ACTUAL_USER"
 
-# 13. SDDM autologin
-ad_step "Configure display manager autologin" bash "$SCRIPT_DIR/setup_autologin.sh" "$ACTUAL_USER"
+    # 14. Unattended security upgrades + nightly reboot
+    ad_step "Configure unattended-upgrades" bash "$SCRIPT_DIR/setup_unattended_upgrades.sh"
 
-# 14. Unattended security upgrades + nightly reboot
-ad_step "Configure unattended-upgrades" bash "$SCRIPT_DIR/setup_unattended_upgrades.sh"
+fi
+
+ad_step "Configure sleep restrictions and firewall" bash "$SCRIPT_DIR/setup_kiosk_hardening.sh"
 
 # 14b. Optional Tailscale enrollment (no-op unless AD_ENABLE_TAILSCALE=1)
 ad_step "Configure Tailscale (optional)" bash "$SCRIPT_DIR/setup_tailscale.sh"
@@ -209,12 +221,15 @@ ad_step "Install GRUB theme" bash "$SCRIPT_DIR/setup_grub_theme.sh"
 # 18. Plymouth theme (boot + shutdown)
 ad_step "Install Plymouth theme" bash "$SCRIPT_DIR/setup_plymouth_theme.sh"
 
-# 19. Boot/shutdown speed tuning (must run after Plymouth so it can
-# merge into the GRUB cmdline Plymouth set up).
-ad_step "Tune boot/shutdown speed" bash "$SCRIPT_DIR/setup_boot_speed.sh"
+if [ "$AD_INSTALL_MODE" = kiosk ]; then
+    # 19. Boot/shutdown speed tuning (must run after Plymouth so it can
+    # merge into the GRUB cmdline Plymouth set up).
+    ad_step "Tune boot/shutdown speed" bash "$SCRIPT_DIR/setup_boot_speed.sh"
 
-# 20. Linux performance & stability tuning (USB camera power, CPU governor, ZRAM, journald)
-ad_step "Tune Linux performance & stability" bash "$SCRIPT_DIR/setup_performance.sh"
+    # 20. Linux performance & stability tuning (USB camera power, CPU governor, ZRAM, journald)
+    ad_step "Tune Linux performance & stability" bash "$SCRIPT_DIR/setup_performance.sh"
+
+fi
 
 # Final verification + summary
 ad_verify

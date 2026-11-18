@@ -6,6 +6,11 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 ### Added
+- Install-time kiosk or desktop mode selection, with saved mode reused by unattended updates; both modes apply boot branding, sleep restrictions, and firewall rules.
+- ASCII installer banner, numbered setup steps, and labwc exit shortcut support.
+
+- Documented tested Lubuntu VM and partially tested Raspberry Pi OS, including Wayland limitations.
+- Skip GRUB theming when GRUB configuration is absent.
 - Winmau AutoDarts desktop, GRUB, and Plymouth branding (`configure_desktop.py`,
   `setup_desktop_branding.sh`, `autodarts-favicon.png` start menu icon with
   `" AUTODARTS"` label, `winmau-autodarts-logo-white.png`, and `brand_spinner_*.png`).

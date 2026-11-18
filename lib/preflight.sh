@@ -10,7 +10,7 @@ ad_preflight() {
     ad_os_load
     ad_ok "OS: ${ad_os_pretty:-unknown}"
     if ad_is_supported_distro; then
-        ad_ok "Distro family: Ubuntu/Debian (.deb) — supported."
+        ad_ok "Distro family: Ubuntu/Debian (.deb) — recognized; feature support varies."
     else
         ad_err "Unsupported distro '${ad_os_id:-?}'. This installer supports Ubuntu/Debian (.deb) distributions."
         fail=1
@@ -74,20 +74,28 @@ ad_confirm() {
     fi
     cat >&2 <<EOF
 
-The installer will:
-  - Install Google Chrome, AutoDarts, SUIT, fastfetch, btop, pavucontrol
-  - Configure Chrome to launch fullscreen at $AUTODARTS_URL on login
-  - Install GRUB (when present) + Plymouth boot/shutdown themes
-  - Set Digital Stereo (HDMI) Output as default audio sink
-  - Configure display manager autologin for user '$(ad_actual_user)'
-  - Enable unattended security upgrades + nightly reboot window
-  - Disable screen blanking / sleep / notifications during kiosk use
-  - Add desktop shortcuts (Reboot, Shutdown, Sound Test, Open SUIT)
-  - Install Ctrl+Alt+Q exit-kiosk hotkey
-  - Schedule weekly config backup + repo self-update via systemd timers
-  - Install autodarts-status command + branded SSH MOTD
-
+Installation mode: $AD_INSTALL_MODE
+Both modes install AutoDarts, Chrome/Chromium, SUIT, system tools,
+operator commands, weekly backups and repository self-updates. Both modes
+install GRUB (when present) and Plymouth branding, mask sleep/hibernate,
+and reset UFW to deny incoming traffic except mDNS and Tailscale.
 EOF
+    if [ "$AD_INSTALL_MODE" = kiosk ]; then
+        cat >&2 <<EOF
+
+Kiosk mode also configures fullscreen browser startup, autologin, HDMI
+audio, desktop branding, security upgrades, and kiosk hardening
+(including Bluetooth and power-button settings).
+Some desktop-specific features depend on the detected session.
+EOF
+    else
+        cat >&2 <<EOF
+
+Desktop mode leaves kiosk setup steps out. Existing kiosk configuration
+is not removed. Start AutoDarts in your browser when needed.
+EOF
+    fi
+    echo >&2
     read -r -p "Proceed? [y/N] " ans </dev/tty || ans=""
     case "$ans" in
         y | Y | yes | YES) return 0 ;;

@@ -6,6 +6,7 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 ### Added
+- Desktop shortcut to Chrome Remote Desktop's web interface when its host is installed, in both install modes.
 - Install the Chrome Remote Desktop host on amd64 in both modes; document enrollment and the ARM limitation.
 - Raspberry Pi OS labwc wallpaper and per-user panel icon branding on next login.
 - Install-time kiosk or desktop mode selection, with saved mode reused by unattended updates; both modes apply boot branding, sleep restrictions, and firewall rules.
@@ -33,6 +34,8 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
   Wired into `essentials.sh` after the Plymouth step.
 
 ### Fixed
+- Use the current AutoDarts logo for branded desktop shortcuts.
+- Disable legacy AutoDarts Chrome autostarts when installing the watchdog to prevent duplicate browser windows after upgrades.
 - CI smoke build no longer references nonexistent `logger` package
   (the binary ships in `bsdutils`); add `iproute2` so
   `autodarts-status` can read interfaces.

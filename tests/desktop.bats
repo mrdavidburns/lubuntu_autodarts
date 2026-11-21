@@ -1,6 +1,10 @@
 #!/usr/bin/env bats
 # Unit tests for desktop branding and performance setup scripts.
 
+@test "legacy Chrome autostart migration" {
+    python3 -m unittest discover -s tests -p 'test_chrome_autostart.py'
+}
+
 @test "configure_desktop.py configures mainmenu icon, text, and wallpaper" {
     local tmp
     tmp=$(mktemp -d)

@@ -19,11 +19,9 @@ ICON_DIR="$ACTUAL_HOME/.local/share/icons"
 
 sudo -u "$ACTUAL_USER" mkdir -p "$DESKTOP" "$ICON_DIR"
 
-# Copy logo for shortcut icons (re-use AutoDarts logo).
-if [ -f "$SCRIPT_DIR/images/autodarts_logo.png" ]; then
-    sudo -u "$ACTUAL_USER" cp "$SCRIPT_DIR/images/autodarts_logo.png" "$ICON_DIR/"
-fi
-LOGO="$ICON_DIR/autodarts_logo.png"
+# Use the current AutoDarts icon for branded shortcuts.
+sudo -u "$ACTUAL_USER" cp "$SCRIPT_DIR/images/autodarts-favicon.png" "$ICON_DIR/"
+LOGO="$ICON_DIR/autodarts-favicon.png"
 
 write_shortcut() {
     local name="$1" comment="$2" exec_cmd="$3" icon="$4"

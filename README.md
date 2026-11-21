@@ -14,7 +14,7 @@ This repository provides a complete setup solution for turning a fresh Lubuntu i
 Choose a mode during installation, before the final confirmation:
 
 - **Kiosk (default):** installs the apps and configures fullscreen browser startup, display-manager autologin, HDMI audio, kiosk hardening, unattended security upgrades and boot/performance tuning. Kiosk hardening also changes Bluetooth and the power button. Desktop-specific behavior varies as described below.
-- **Desktop:** installs AutoDarts, Chrome or Chromium, SUIT, system and operator tools, plus weekly backup and repository self-update timers. Open AutoDarts in your browser when needed. It skips kiosk-only configuration such as fullscreen browser startup, autologin, forced browser extensions and desktop shortcuts. The upstream AutoDarts installer still creates its system services.
+- **Desktop:** installs AutoDarts, Chrome or Chromium, SUIT, system and operator tools, plus weekly backup and repository self-update timers. Open AutoDarts in your browser when needed. It skips kiosk-only configuration such as fullscreen browser startup, autologin, forced browser extensions and kiosk operator shortcuts. The upstream AutoDarts installer still creates its system services.
 
 Both modes apply desktop branding on supported desktops, install GRUB branding when GRUB is present and the Plymouth theme, mask system sleep/hibernate targets, and configure UFW. **The firewall setup resets existing UFW rules**, denies incoming traffic, permits mDNS and Tailscale, and allows outgoing traffic. Both modes can change packages and install services. Selecting desktop on a machine already configured as a kiosk **does not undo prior settings**: existing fullscreen startup, autologin, firewall rules, sleep masks, boot changes and other kiosk settings remain. Use a fresh installation for a desktop without those changes.
 
@@ -30,7 +30,7 @@ The choice is saved in `/etc/autodarts/install-mode` and reused by unattended we
 
 The installer uses Google Chrome on amd64 and Chromium on other architectures if available. A systemd-based graphical Debian/Ubuntu installation, working network, supported browser packages, sudo access and at least 3 GB free disk space are required. The preflight check is not a guarantee that every distribution or architecture is supported by upstream components. Non-Debian distributions are not supported.
 
-Both install modes install the Chrome Remote Desktop host on amd64 using Google's Debian package. It is skipped on ARM, including Raspberry Pi, because Google's host package is for amd64. Installation alone does not enable remote access: on the machine, open Chrome and follow [Google's remote access setup](https://remotedesktop.google.com/access), including signing in and setting a PIN. On Linux, remote access starts a separate virtual desktop session; choose an available X11 desktop when prompted. Desktop-session compatibility has not been tested by this project.
+Both install modes install the Chrome Remote Desktop host on amd64 using Google's Debian package and add a desktop shortcut to its web interface. It is skipped on ARM, including Raspberry Pi, because Google's host package is for amd64. Installation alone does not enable remote access: on the machine, open the shortcut and follow [Google's remote access setup](https://remotedesktop.google.com/access), including signing in and setting a PIN. On Linux, remote access starts a separate virtual desktop session; choose an available X11 desktop when prompted. Desktop-session compatibility has not been tested by this project.
 
 ## Desktop compatibility
 
@@ -172,6 +172,8 @@ EXTRA_EXTENSION_IDS=abc123,def456 sudo -E ./setup_chrome_policy.sh   # add more
 ```
 
 ### Chrome Watchdog Only
+
+The watchdog setup disables legacy AutoDarts Chrome autostart entries to prevent duplicate windows after upgrading. Log out and back in for the change to take effect. The watchdog restarts Chrome when it closes; use `exit-kiosk` to stop it.
 ```bash
 ./setup_chrome_watchdog.sh
 AUTODARTS_URL=https://my.host ./setup_chrome_watchdog.sh

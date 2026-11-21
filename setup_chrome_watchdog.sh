@@ -36,8 +36,9 @@ RestartSec=5
 WantedBy=graphical-session.target
 EOF
 
-# Drop the old autostart .desktop so the two don't fight.
-rm -f "$ACTUAL_HOME/.config/autostart/google-chrome-fullscreen.desktop"
+# Disable legacy user and system autostarts before installing the watchdog.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+sudo -u "$ACTUAL_USER" -H python3 "$SCRIPT_DIR/disable_legacy_chrome_autostart.py" "$AUTODARTS_URL"
 
 # Import the actual graphical session environment before launching Chrome.
 AUTOSTART_DIR="$ACTUAL_HOME/.config/autostart"

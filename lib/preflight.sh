@@ -75,7 +75,7 @@ ad_confirm() {
     cat >&2 <<EOF
 
 Installation mode: $AD_INSTALL_MODE
-Both modes install AutoDarts, Chrome/Chromium, SUIT, system tools,
+Both modes install AutoDarts, Chrome/Chromium, Chrome Remote Desktop (amd64), SUIT, system tools,
 operator commands, weekly backups and repository self-updates. Both modes
 configure desktop branding where supported, install GRUB (when present)
 and Plymouth branding, mask sleep/hibernate,

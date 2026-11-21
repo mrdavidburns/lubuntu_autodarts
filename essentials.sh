@@ -35,6 +35,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/lib/mode.sh"
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/lib/verify.sh"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/remote_desktop.sh"
 
 trap 'ad_on_err $LINENO $? "$BASH_COMMAND"' ERR
 
@@ -103,6 +105,7 @@ EOF
     ad_apt install google-chrome-stable
 }
 ad_step "Install Google Chrome / Chromium" install_chrome
+ad_step "Install Chrome Remote Desktop host" ad_install_remote_desktop
 
 # 2. AutoDarts (run as kiosk user)
 ad_step "Install AutoDarts" \

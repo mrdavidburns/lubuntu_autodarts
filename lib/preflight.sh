@@ -75,11 +75,13 @@ ad_confirm() {
     cat >/dev/tty <<EOF
 
 Installation mode: $AD_INSTALL_MODE
-Both modes install AutoDarts, Chrome/Chromium, RustDesk, SUIT, system tools,
+Both modes install AutoDarts headless, Chrome/Chromium, RustDesk, SUIT, system tools,
 operator commands, weekly backups and repository self-updates. Both modes
 configure desktop branding where supported, install GRUB (when present)
 and Plymouth branding, mask sleep/hibernate,
 and reset UFW to deny incoming traffic except mDNS and Tailscale.
+AutoDarts may migrate an older installation; its new service must be enabled
+in AutoDarts after installation for the board to start automatically.
 EOF
     if [ "$AD_INSTALL_MODE" = kiosk ]; then
         cat >/dev/tty <<EOF

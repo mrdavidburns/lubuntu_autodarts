@@ -14,7 +14,7 @@ This repository provides a complete setup solution for turning a fresh Lubuntu i
 Choose a mode during installation, before the final confirmation:
 
 - **Kiosk (default):** installs the apps and configures fullscreen browser startup, display-manager autologin, HDMI audio, kiosk hardening, unattended security upgrades and boot/performance tuning. Kiosk hardening also changes Bluetooth and the power button. Desktop-specific behavior varies as described below.
-- **Desktop:** installs AutoDarts, Chrome or Chromium, SUIT, system and operator tools, plus weekly backup and repository self-update timers. Open AutoDarts in your browser when needed. It skips kiosk-only configuration such as fullscreen browser startup, autologin, forced browser extensions and kiosk operator shortcuts. The upstream AutoDarts installer still creates its system services.
+- **Desktop:** installs AutoDarts headless, Chrome or Chromium, SUIT, system and operator tools, plus weekly backup and repository self-update timers. Open AutoDarts in your browser when needed. It skips kiosk-only configuration such as fullscreen browser startup, autologin, forced browser extensions and kiosk operator shortcuts.
 
 Both modes apply desktop branding on supported desktops, install GRUB branding when GRUB is present and the Plymouth theme, mask system sleep/hibernate targets, and configure UFW. **The firewall setup resets existing UFW rules**, denies incoming traffic, permits mDNS and Tailscale, and allows outgoing traffic. Both modes can change packages and install services. Selecting desktop on a machine already configured as a kiosk **does not undo prior settings**: existing fullscreen startup, autologin, firewall rules, sleep masks, boot changes and other kiosk settings remain. Use a fresh installation for a desktop without those changes.
 
@@ -52,6 +52,10 @@ curl -fsSL https://raw.githubusercontent.com/mrdavidburns/lubuntu_autodarts/main
 ```
 
 Clones the repo to `~/lubuntu_autodarts` and runs `essentials.sh`.
+
+Both modes use the [official AutoDarts headless installer](https://docs.autodarts.com/getting-started/detection/headless-installation/) with `--headless`. After setup, run `~/.local/bin/autodarts` as the normal user, sign in, set up and calibrate the board, then select **Run as a service** in its Service section to start detection automatically. The upstream installer does not enable this service on a fresh install. Its Board Manager is available at `http://localhost:3180/` while the board is running.
+
+On an older installation, upstream may remove the old AutoDarts program and system services as part of migration; its documentation says existing board settings are retained. Recheck sign-in, calibration, and service startup after migration. The current headless installer may require sudo for legacy cleanup, even though fresh installation does not. The desktop firewall denies incoming connections except the rules described above, so network access to Board Manager is not enabled automatically.
 
 For unattended setup, provide both the mode and confirmation explicitly:
 

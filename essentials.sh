@@ -113,15 +113,31 @@ ad_step "Install Google Chrome / Chromium" install_chrome
 ad_step "Install RustDesk" ad_install_remote_desktop
 ad_step "Install RustDesk shortcut" bash "$SCRIPT_DIR/setup_remote_desktop_shortcut.sh"
 
-# 2. AutoDarts (run as kiosk user)
-ad_step "Install AutoDarts" \
-    sudo -u "$ACTUAL_USER" -H bash -c '
+# 2. AutoDarts headless (run as kiosk user). Upstream may invoke sudo to
+# migrate an older install; use classic sudo when available.
+install_autodarts() {
+    local sudo_cmd=sudo wrapper_dir="" rc=0
+    if command -v sudo.ws >/dev/null 2>&1; then
+        sudo_cmd=$(command -v sudo.ws)
+        wrapper_dir=$(mktemp -d) || return 1
+        chmod 0755 "$wrapper_dir"
+        printf '#!/bin/sh\nexec %s "$@"\n' "$sudo_cmd" >"$wrapper_dir/sudo"
+        chmod 0755 "$wrapper_dir/sudo"
+    fi
+    "$sudo_cmd" -u "$ACTUAL_USER" -H env PATH="${wrapper_dir:+$wrapper_dir:}$PATH" bash -c '
         set -e
         installer=$(mktemp)
         trap '\''rm -f "$installer"'\'' EXIT
-        curl -fsSL https://get.autodarts.io -o "$installer"
-        bash "$installer"
-    '
+        curl -fsSL https://autodarts.sh -o "$installer"
+        bash "$installer" --headless
+    ' || rc=$?
+    if [ -n "$wrapper_dir" ]; then
+        rm -rf "$wrapper_dir"
+    fi
+    return "$rc"
+}
+ad_step "Install AutoDarts" install_autodarts
+ad_warn "Complete AutoDarts setup: run ~/.local/bin/autodarts, sign in, configure the board, and select Run as a service."
 
 # 3. Chrome managed-policy + force-installed extensions
 if [ "$AD_INSTALL_MODE" = kiosk ]; then

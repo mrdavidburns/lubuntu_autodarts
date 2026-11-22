@@ -20,8 +20,8 @@ ad_verify() {
     user=$(ad_actual_user)
 
     ad_check "Chrome or Chromium installed" bash -c 'command -v google-chrome-stable || command -v chromium || command -v chromium-browser'
-    ad_check "AutoDarts installer ran (HOME/autodarts present)" \
-        test -d "$home/autodarts"
+    ad_check "AutoDarts headless command installed" \
+        test -x "$home/.local/bin/autodarts"
     ad_check "SUIT cloned" test -d "$home/SUIT/.git"
     ad_check "Plymouth default = autodarts" \
         bash -c 'plymouth-set-default-theme | grep -q "^autodarts$"'

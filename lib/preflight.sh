@@ -72,7 +72,7 @@ ad_confirm() {
         ad_ok "AD_AUTOCONFIRM=1 — skipping prompt."
         return 0
     fi
-    cat >&2 <<EOF
+    cat >/dev/tty <<EOF
 
 Installation mode: $AD_INSTALL_MODE
 Both modes install AutoDarts, Chrome/Chromium, RustDesk, SUIT, system tools,
@@ -82,7 +82,7 @@ and Plymouth branding, mask sleep/hibernate,
 and reset UFW to deny incoming traffic except mDNS and Tailscale.
 EOF
     if [ "$AD_INSTALL_MODE" = kiosk ]; then
-        cat >&2 <<EOF
+        cat >/dev/tty <<EOF
 
 Kiosk mode also configures fullscreen browser startup, autologin, HDMI
 audio, security upgrades, and kiosk hardening
@@ -90,14 +90,14 @@ audio, security upgrades, and kiosk hardening
 Some desktop-specific features depend on the detected session.
 EOF
     else
-        cat >&2 <<EOF
+        cat >/dev/tty <<EOF
 
 Desktop mode leaves kiosk setup steps out. Existing kiosk configuration
 is not removed. Start AutoDarts in your browser when needed.
 EOF
     fi
-    echo >&2
-    read -r -p "Proceed? [y/N] " ans </dev/tty || ans=""
+    printf '\nProceed? [y/N] ' >/dev/tty
+    read -r ans </dev/tty || ans=""
     case "$ans" in
         y | Y | yes | YES) return 0 ;;
         *)

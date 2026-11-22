@@ -69,3 +69,7 @@ teardown() {
         grep -q 'ufw --force enable' "$MODE_TEST_DIR/calls"
     done
 }
+
+@test "interactive prompts remain visible while output is redirected" {
+    python3 -m unittest discover -s tests -p 'test_installer_prompts.py'
+}

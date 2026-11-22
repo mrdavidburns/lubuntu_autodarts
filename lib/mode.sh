@@ -26,11 +26,11 @@ ad_select_mode() {
         # Preserve the historical kiosk default for pre-existing unattended installs.
         AD_INSTALL_MODE="${saved:-kiosk}"
     else
-        printf '\nChoose installation mode:\n  1) Kiosk: fullscreen browser, autologin and kiosk system settings\n  2) Desktop: apps and shared system settings without fullscreen or autologin\n' >&2
+        printf '\nChoose installation mode:\n  1) Kiosk: fullscreen browser, autologin and kiosk system settings\n  2) Desktop: apps and shared system settings without fullscreen or autologin\n' >/dev/tty
         if [ "$saved" = desktop ]; then
-            printf 'Selection [2]: ' >&2
+            printf 'Selection [2]: ' >/dev/tty
         else
-            printf 'Selection [1]: ' >&2
+            printf 'Selection [1]: ' >/dev/tty
         fi
         if ! read -r answer </dev/tty; then
             ad_err "Cannot read a mode selection; set AD_KIOSK_MODE=1 or 0."

@@ -32,15 +32,19 @@ ad_actual_home() {
 # Detect the running kiosk desktop; an explicit override helps headless installs.
 ad_desktop() {
     local user="${1:-$(ad_actual_user)}" hint
+    if [ -z "${AD_DESKTOP:-}" ] && pgrep -u "$user" -x lxqt-session >/dev/null 2>&1; then
+        echo lxqt
+        return
+    fi
     hint="${AD_DESKTOP:-${XDG_CURRENT_DESKTOP:-}:${XDG_SESSION_DESKTOP:-}}"
     hint=$(printf '%s' "$hint" | tr '[:upper:]' '[:lower:]')
     case "$hint" in
-        *labwc* | *raspberry* | *pixel*)
-            echo labwc
-            return
-            ;;
         *lxqt*)
             echo lxqt
+            return
+            ;;
+        *labwc* | *raspberry* | *pixel*)
+            echo labwc
             return
             ;;
         *wayfire*)
@@ -52,8 +56,6 @@ ad_desktop() {
         echo labwc
     elif pgrep -u "$user" -x wayfire >/dev/null 2>&1; then
         echo wayfire
-    elif pgrep -u "$user" -x lxqt-session >/dev/null 2>&1; then
-        echo lxqt
     else
         echo unknown
     fi

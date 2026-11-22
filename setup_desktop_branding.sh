@@ -68,6 +68,7 @@ if [ "$DESKTOP" != lxqt ]; then
 fi
 
 if [ ! -f "$ACTUAL_HOME/.config/lxqt/panel.conf" ] \
+    && [ ! -f /etc/xdg/xdg-Lubuntu/lxqt/panel.conf ] \
     && [ ! -f /etc/xdg/lubuntu/lxqt/panel.conf ] \
     && [ ! -f /etc/xdg/lxqt/panel.conf ]; then
     ad_warn "LXQt panel configuration not found; skipping LXQt desktop branding."
@@ -81,6 +82,19 @@ sudo -u "$ACTUAL_USER" install -m 0644 "$SCRIPT_DIR/images/$WALLPAPER" \
 sudo -u "$ACTUAL_USER" install -m 0644 "$SCRIPT_DIR/images/$ICON" \
     "$ACTUAL_HOME/.local/share/icons/$ICON"
 sudo -u "$ACTUAL_USER" -H python3 "$SCRIPT_DIR/configure_desktop.py"
+
+# The live panel can overwrite changes made while it is running. Apply them
+# again once in the graphical session, while the LXQt panel module is stopped.
+sudo -u "$ACTUAL_USER" mkdir -p "$ACTUAL_HOME/.local/share/autodarts"
+sudo -u "$ACTUAL_USER" install -m 0644 "$SCRIPT_DIR/configure_desktop.py" "$ACTUAL_HOME/.local/share/autodarts/configure_desktop.py"
+sudo -u "$ACTUAL_USER" install -m 0755 "$SCRIPT_DIR/lib/apply-lxqt-branding" "$USER_BIN/autodarts-lxqt-branding"
+sudo -u "$ACTUAL_USER" tee "$AUTOSTART/autodarts-lxqt-branding.desktop" >/dev/null <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Apply AutoDarts panel branding
+Exec=$USER_BIN/autodarts-lxqt-branding
+OnlyShowIn=LXQt;
+DESKTOP
 
 # Run in the user's graphical session once pcmanfm-qt --desktop is up, then
 # remove the autostart entry so later user wallpaper changes persist.

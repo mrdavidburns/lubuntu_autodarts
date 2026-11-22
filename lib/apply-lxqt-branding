@@ -1,0 +1,32 @@
+#!/bin/sh
+# Reapply panel settings after LXQt has saved and stopped its panel module.
+set -u
+module=lxqt-panel.desktop
+call_session() {
+    dbus-send --session --print-reply --dest=org.lxqt.session /LXQtSession "org.lxqt.session.$1" "string:$module" >/dev/null
+}
+if ! call_session stopModule; then
+    echo 'Could not stop LXQt panel; branding will be retried at next login.' >&2
+    exit 1
+fi
+restart_panel() { call_session startModule || echo 'Could not restart LXQt panel.' >&2; }
+trap restart_panel EXIT
+count=0
+while pgrep -u "$(id -u)" -x lxqt-panel >/dev/null 2>&1; do
+    count=$((count + 1))
+    if [ "$count" -ge 20 ]; then
+        echo 'LXQt panel did not stop; branding will be retried.' >&2
+        exit 1
+    fi
+    sleep 1
+done
+if ! python3 "$HOME/.local/share/autodarts/configure_desktop.py"; then
+    echo 'Could not apply LXQt branding; it will be retried.' >&2
+    exit 1
+fi
+if ! call_session startModule; then
+    echo 'Could not restart LXQt panel; branding will be retried.' >&2
+    exit 1
+fi
+trap - EXIT
+rm -f "$HOME/.config/autostart/autodarts-lxqt-branding.desktop"

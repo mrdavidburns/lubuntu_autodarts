@@ -36,6 +36,7 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
   Wired into `essentials.sh` after the Plymouth step.
 
 ### Fixed
+- Detect LXQt sessions running on labwc, configure the selected display manager, and restart kiosk Chrome after importing the graphical session environment.
 - Use classic sudo for the legacy AutoDarts installer's nested service setup when available, avoiding sudo-rs pipe hangs.
 - Avoid a sudo-rs terminal job-control hang in piped installs by using terminal input and classic sudo when available.
 - Display mode and confirmation prompts directly on the terminal when installer output is logged.

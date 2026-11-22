@@ -12,6 +12,9 @@
 set -euo pipefail
 
 USERNAME="${1:-${SUDO_USER:-${USER:-$(id -un)}}}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/display_manager.sh"
 SDDM_CONF_DIR="/etc/sddm.conf.d"
 CONF_FILE="$SDDM_CONF_DIR/10-autodarts-autologin.conf"
 
@@ -25,18 +28,18 @@ if ! id "$USERNAME" >/dev/null 2>&1; then
     exit 1
 fi
 
-if command -v sddm >/dev/null 2>&1; then
+DISPLAY_MANAGER=$(ad_display_manager)
+if [ "$DISPLAY_MANAGER" = sddm ]; then
     # autologin group exists on Lubuntu by default; create if missing.
     if ! getent group autologin >/dev/null; then
         groupadd autologin
     fi
     usermod -aG autologin "$USERNAME"
 
-    SESSION="lxqt.desktop"
-    if [ ! -f "/usr/share/xsessions/$SESSION" ] && [ -d /usr/share/xsessions ]; then
-        first_session=$(find /usr/share/xsessions -maxdepth 1 -name '*.desktop' -printf '%f\n' | head -n1 || true)
-        [ -n "$first_session" ] && SESSION="$first_session"
-    fi
+    SESSION=$(ad_sddm_session "$CONF_FILE" /var/lib/sddm/state.conf /usr/share/xsessions /usr/share/wayland-sessions) || {
+        echo "Warning: No supported LXQt session found; skipping SDDM autologin setup." >&2
+        exit 0
+    }
 
     mkdir -p "$SDDM_CONF_DIR"
     cat >"$CONF_FILE" <<EOF
@@ -50,7 +53,7 @@ RebootCommand=/usr/bin/systemctl reboot
 EOF
     chmod 644 "$CONF_FILE"
     echo "SDDM autologin configured for $USERNAME ($SESSION) → $CONF_FILE"
-elif command -v lightdm >/dev/null 2>&1; then
+elif [ "$DISPLAY_MANAGER" = lightdm ]; then
     if getent group autologin >/dev/null; then
         usermod -aG autologin "$USERNAME"
     fi
@@ -63,7 +66,7 @@ autologin-user-timeout=0
 EOF
     chmod 644 "$LIGHTDM_CONF"
     echo "LightDM autologin configured for $USERNAME → $LIGHTDM_CONF"
-elif [ -f /etc/gdm3/custom.conf ] || [ -f /etc/gdm/custom.conf ]; then
+elif [ "$DISPLAY_MANAGER" = gdm3 ] || [ "$DISPLAY_MANAGER" = gdm ]; then
     GDM_CONF="/etc/gdm3/custom.conf"
     [ -f "$GDM_CONF" ] || GDM_CONF="/etc/gdm/custom.conf"
     if grep -q '^\[daemon\]' "$GDM_CONF"; then

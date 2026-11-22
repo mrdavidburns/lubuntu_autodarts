@@ -47,17 +47,21 @@ sudo -u "$ACTUAL_USER" tee "$AUTOSTART_DIR/autodarts-chrome-watchdog.desktop" >/
 [Desktop Entry]
 Type=Application
 Name=AutoDarts Chrome watchdog
-Exec=/bin/sh -c "systemctl --user import-environment DISPLAY XAUTHORITY WAYLAND_DISPLAY XDG_RUNTIME_DIR XDG_SESSION_TYPE XDG_CURRENT_DESKTOP DBUS_SESSION_BUS_ADDRESS; systemctl --user start autodarts-chrome.service"
+Exec=/bin/sh -c "systemctl --user import-environment DISPLAY XAUTHORITY WAYLAND_DISPLAY XDG_RUNTIME_DIR XDG_SESSION_TYPE XDG_CURRENT_DESKTOP DBUS_SESSION_BUS_ADDRESS; systemctl --user restart autodarts-chrome.service"
 EOF
 
 # Linger lets the user unit survive logout (fine for kiosks).
 loginctl enable-linger "$ACTUAL_USER" || true
 
 # Enable for next login. Avoid running it now (no DISPLAY in setup context).
-sudo -u "$ACTUAL_USER" XDG_RUNTIME_DIR="/run/user/$(id -u "$ACTUAL_USER")" \
-    systemctl --user daemon-reload || true
-sudo -u "$ACTUAL_USER" XDG_RUNTIME_DIR="/run/user/$(id -u "$ACTUAL_USER")" \
-    systemctl --user enable autodarts-chrome.service || true
+if ! sudo -u "$ACTUAL_USER" XDG_RUNTIME_DIR="/run/user/$(id -u "$ACTUAL_USER")" \
+    systemctl --user daemon-reload; then
+    echo "Warning: user systemd session unavailable; the login launcher will try to start Chrome." >&2
+fi
+if ! sudo -u "$ACTUAL_USER" XDG_RUNTIME_DIR="/run/user/$(id -u "$ACTUAL_USER")" \
+    systemctl --user enable autodarts-chrome.service; then
+    echo "Warning: Chrome user service could not be enabled; check the user's systemd session." >&2
+fi
 
 echo "Chrome watchdog installed: $UNIT"
 echo "URL: $AUTODARTS_URL"

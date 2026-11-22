@@ -24,6 +24,7 @@ The choice is saved in `/etc/autodarts/install-mode` and reused by unattended we
 
 | System | Status |
 | --- | --- |
+| Lubuntu 24.04 and 26.04 with LXQt and X11 or Wayland | The installer detects LXQt separately from its compositor and preserves an existing SDDM session choice. Kiosk startup and branding across these combinations still need device verification. |
 | Lubuntu 26.04, LXQt | User reports the upgraded installation is working; desktop shortcut trust prompts are still being investigated. |
 | Lubuntu 24.04, LXQt | Kiosk installation exercised on a test VM; hardware and individual features can vary. |
 | Raspberry Pi OS (Debian 13 / Trixie, arm64) | Installation was run on a Raspberry Pi 4 but did not complete; the GRUB failure has been addressed in code. Desktop integration and end-to-end operation still need hardware validation. |
@@ -376,6 +377,8 @@ Boot time and theme availability vary by hardware and distribution.
 
 ### Chrome not auto-launching in kiosk mode
 - Check `~/.config/autostart/autodarts-chrome-watchdog.desktop` and `~/.config/systemd/user/autodarts-chrome.service`.
+- Check `systemctl --user status autodarts-chrome.service` and `journalctl --user -u autodarts-chrome.service -b` after login for startup errors. The installer must finish and the user must log in again for the launcher to run.
+- The kiosk launcher uses Chrome's `--password-store=basic`; a manually launched Chrome does not automatically use that flag. The basic store does not provide keyring encryption, so saved browser credentials are less protected. A password dialog may instead be from the desktop keyring; check its title before changing keyring settings.
 - Check `systemctl --user status autodarts-chrome.service`, then log out and back in.
 - Verify that Chrome or Chromium is installed. Desktop mode does not enable browser autostart.
 

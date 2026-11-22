@@ -26,6 +26,13 @@ class DesktopTests(unittest.TestCase):
             result = subprocess.check_output(['bash', '-c', f'. lib/common.sh; AD_DESKTOP={name} ad_desktop nobody'], cwd=ROOT, text=True)
             self.assertEqual(result.strip(), name)
 
+    def test_lxqt_session_takes_precedence_over_wayland_compositor(self):
+        result = subprocess.check_output(
+            ['bash', '-c', '. lib/common.sh; XDG_CURRENT_DESKTOP=LXQt:labwc ad_desktop nobody'],
+            cwd=ROOT, text=True,
+        )
+        self.assertEqual(result.strip(), 'lxqt')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -83,7 +83,11 @@ def main() -> int:
     panel = home / '.config/lxqt/panel.conf'
     if not _ensure_config(
         panel,
-        [Path('/etc/xdg/lubuntu/lxqt/panel.conf'), Path('/etc/xdg/lxqt/panel.conf')],
+        [
+            Path('/etc/xdg/xdg-Lubuntu/lxqt/panel.conf'),
+            Path('/etc/xdg/lubuntu/lxqt/panel.conf'),
+            Path('/etc/xdg/lxqt/panel.conf'),
+        ],
         'LXQt panel',
     ):
         print('No LXQt panel configuration found', file=sys.stderr)

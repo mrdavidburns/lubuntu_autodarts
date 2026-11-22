@@ -27,6 +27,14 @@ teardown() {
     [ "$AD_INSTALL_MODE" = kiosk ]
 }
 
+@test "successful kiosk and desktop selections return success to the installer" {
+    for mode in 1 0; do
+        run env AD_KIOSK_MODE="$mode" bash -c '. lib/common.sh; . lib/mode.sh; ad_select_mode "$1" || exit 42; echo continued' _ "$MODE_TEST_DIR/absent"
+        [ "$status" -eq 0 ]
+        [[ "$output" == *continued* ]]
+    done
+}
+
 @test "invalid explicit or saved mode fails instead of changing behavior" {
     run env AD_KIOSK_MODE=maybe bash -c '. lib/common.sh; . lib/mode.sh; ad_select_mode "$1"' _ "$MODE_TEST_DIR/absent"
     [ "$status" -ne 0 ]

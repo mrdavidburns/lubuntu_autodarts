@@ -35,6 +35,7 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
   Wired into `essentials.sh` after the Plymouth step.
 
 ### Fixed
+- Continue past installation mode selection when kiosk mode is chosen.
 - Retry trust for unchanged installer-created shortcuts in the graphical session, where GVFS metadata is available.
 - Document the user's successful Lubuntu 26.04 upgrade and remaining shortcut trust issue.
 - Mark installer-created desktop shortcuts trusted for PCManFM-Qt so they can launch without a confirmation prompt.

@@ -51,4 +51,5 @@ ad_select_mode() {
     if [ "$AD_INSTALL_MODE" = desktop ]; then
         ad_warn "Desktop mode does not undo kiosk settings from an earlier installation."
     fi
+    return 0
 }

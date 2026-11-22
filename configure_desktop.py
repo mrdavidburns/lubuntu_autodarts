@@ -1,4 +1,4 @@
-"""Configure LXQt's main-menu icon and pcmanfm-qt desktop wallpaper."""
+"""Configure LXQt menu branding and pcmanfm-qt desktop wallpaper."""
 
 import re
 import shutil
@@ -22,7 +22,7 @@ def configure_panel(path: Path, icon: str) -> None:
     sections = re.split(r'(?=^\[[^\]]+\]\s*$)', text, flags=re.MULTILINE)
     found = False
     for index, section in enumerate(sections):
-        if not re.search(r'^type\s*=\s*mainmenu\s*$', section, re.MULTILINE):
+        if not re.search(r'^type\s*=\s*(?:mainmenu|fancymenu)\s*$', section, re.MULTILINE):
             continue
         found = True
         sections[index] = _set_section_keys(
@@ -35,7 +35,7 @@ def configure_panel(path: Path, icon: str) -> None:
             },
         )
     if not found:
-        raise ValueError("No LXQt main menu plugin found in panel.conf")
+        raise ValueError("No LXQt mainmenu or fancymenu plugin found in panel.conf")
     updated = ''.join(sections)
     if updated != text:
         path.write_text(updated)

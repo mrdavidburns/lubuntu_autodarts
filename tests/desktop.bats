@@ -91,3 +91,30 @@ EOF
     [ ! -e "$tmp/sudo-called" ]
     rm -rf "$tmp"
 }
+
+@test "configure_desktop.py brands Fancy Menu without changing other settings" {
+    local tmp
+    tmp=$(mktemp -d)
+    mkdir -p "$tmp/.config/lxqt"
+    cat > "$tmp/.config/lxqt/panel.conf" <<'PANEL'
+[menu2]
+type=fancymenu
+menu_file=/etc/xdg/menus/lxqt-applications-compact.menu
+ownIcon=false
+showText=false
+
+[clock]
+type=worldclock
+PANEL
+    HOME="$tmp" python3 configure_desktop.py
+    cp "$tmp/.config/lxqt/panel.conf" "$tmp/first"
+    HOME="$tmp" python3 configure_desktop.py
+    cmp "$tmp/first" "$tmp/.config/lxqt/panel.conf"
+    grep -Fq "icon=$tmp/.local/share/icons/autodarts-favicon.png" "$tmp/first"
+    grep -Fxq 'ownIcon=true' "$tmp/first"
+    grep -Fxq 'showText=true' "$tmp/first"
+    grep -Fxq 'text=" AUTODARTS"' "$tmp/first"
+    grep -Fxq 'menu_file=/etc/xdg/menus/lxqt-applications-compact.menu' "$tmp/first"
+    grep -Fxq 'type=worldclock' "$tmp/first"
+    rm -rf "$tmp"
+}

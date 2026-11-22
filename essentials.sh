@@ -9,6 +9,11 @@
 set -Eeuo pipefail
 
 if [ "$EUID" -ne 0 ]; then
+    # Ubuntu 26.04's sudo-rs can stop apt or an interactive child when
+    # invoked from a pipeline. Use Ubuntu's classic sudo when available.
+    if command -v sudo.ws >/dev/null 2>&1; then
+        exec sudo.ws -E "$0" "$@"
+    fi
     exec sudo -E "$0" "$@"
 fi
 

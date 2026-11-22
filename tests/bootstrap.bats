@@ -37,3 +37,14 @@ teardown() { rm -rf "$TEST_DIR"; }
     [ "$(cat "$TEST_DIR/target/setup_example.sh")" = 'personal change' ]
     [ -x "$TEST_DIR/target/setup_example.sh" ]
 }
+
+@test "installer prefers classic sudo when it is available" {
+    [ "$(id -u)" -ne 0 ] || skip 'requires an unprivileged test user'
+    mkdir -p "$TEST_DIR/bin"
+    printf '#!/bin/sh\nprintf "classic-sudo\\n"\n' > "$TEST_DIR/bin/sudo.ws"
+    printf '#!/bin/sh\nprintf "fallback-sudo\\n"\n' > "$TEST_DIR/bin/sudo"
+    chmod +x "$TEST_DIR/bin/sudo.ws" "$TEST_DIR/bin/sudo"
+    run env PATH="$TEST_DIR/bin:$PATH" bash essentials.sh
+    [ "$status" -eq 0 ]
+    [[ "$output" == *classic-sudo* ]]
+}

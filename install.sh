@@ -65,4 +65,9 @@ echo
 echo "[Bootstrap] Repository ready at $TARGET."
 echo "[Bootstrap] Starting system setup..."
 echo
+# The downloaded bootstrap arrives on a pipe. Give sudo a terminal for
+# interactive runs to avoid sudo-rs job-control hangs with piped input.
+if [ -t 1 ] && { : </dev/tty; } 2>/dev/null; then
+    exec bash ./essentials.sh "$@" </dev/tty
+fi
 exec bash ./essentials.sh "$@"

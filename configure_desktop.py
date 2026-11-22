@@ -22,7 +22,14 @@ def configure_panel(path: Path, icon: str) -> None:
     sections = re.split(r'(?=^\[[^\]]+\]\s*$)', text, flags=re.MULTILINE)
     found = False
     for index, section in enumerate(sections):
-        if not re.search(r'^type\s*=\s*(?:mainmenu|fancymenu)\s*$', section, re.MULTILINE):
+        plugin_type = re.search(r'^type\s*=\s*([^\s]+)\s*$', section, re.MULTILINE)
+        section_name = re.match(r'^\[(mainmenu|fancymenu)\d*\]\s*$', section, re.MULTILINE)
+        if plugin_type:
+            is_menu = plugin_type.group(1) in ('mainmenu', 'fancymenu')
+        else:
+            # LXQt can inherit the plugin type from the system panel defaults.
+            is_menu = section_name is not None
+        if not is_menu:
             continue
         found = True
         sections[index] = _set_section_keys(

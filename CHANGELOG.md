@@ -36,6 +36,7 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
   Wired into `essentials.sh` after the Plymouth step.
 
 ### Fixed
+- Brand LXQt menu sections that inherit their plugin type from system defaults, including Lubuntu's Fancy Menu.
 - Wait for the LXQt panel to start before applying branding, and log the login-time repair for troubleshooting.
 - Apply AutoDarts menu icon and text to LXQt Fancy Menu as well as the classic Main Menu.
 - Detect LXQt sessions running on labwc, configure the selected display manager, and restart kiosk Chrome after importing the graphical session environment.

@@ -118,3 +118,40 @@ PANEL
     grep -Fxq 'type=worldclock' "$tmp/first"
     rm -rf "$tmp"
 }
+
+@test "brands Fancy Menu with an inherited plugin type even when old Main Menu remains" {
+    local tmp
+    tmp=$(mktemp -d)
+    mkdir -p "$tmp/.config/lxqt"
+    cat > "$tmp/.config/lxqt/panel.conf" <<'PANEL'
+[fancymenu]
+icon=/old/icon.png
+ownIcon=false
+showText=false
+
+[mainmenu]
+type=mainmenu
+icon=/old/main.png
+
+[fancymenu2]
+type=worldclock
+icon=keep-me
+PANEL
+    HOME="$tmp" python3 configure_desktop.py
+    python3 - "$tmp" <<'PY'
+import configparser
+from pathlib import Path
+import sys
+
+home = Path(sys.argv[1])
+config = configparser.ConfigParser(interpolation=None)
+config.optionxform = str
+config.read(home / '.config/lxqt/panel.conf')
+for name in ('fancymenu', 'mainmenu'):
+    assert config[name]['icon'] == str(home / '.local/share/icons/autodarts-favicon.png')
+    assert config[name]['ownIcon'] == 'true'
+    assert config[name]['showText'] == 'true'
+assert config['fancymenu2']['icon'] == 'keep-me'
+PY
+    rm -rf "$tmp"
+}

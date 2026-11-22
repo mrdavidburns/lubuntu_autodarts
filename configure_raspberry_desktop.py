@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Configure Raspberry Pi PCManFM wallpaper and per-user panel icon overrides."""
 import configparser
 import shutil

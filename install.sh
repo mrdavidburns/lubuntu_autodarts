@@ -39,6 +39,20 @@ fi
 
 if [ -d "$TARGET/.git" ]; then
     echo "[Bootstrap] Updating existing clone at $TARGET..."
+    # Older bootstraps ran chmod +x on every setup script. Undo only that
+    # mode change when the file contents still exactly match the Git index.
+    for file in "$TARGET"/setup_*.sh "$TARGET"/essentials.sh "$TARGET"/install.sh; do
+        [ -f "$file" ] || continue
+        name=${file#"$TARGET"/}
+        entry=$(git -C "$TARGET" ls-files -s -- "$name")
+        [ -n "$entry" ] || continue
+        read -r mode expected _ <<<"$entry"
+        if [ "$mode" = 100644 ] && [ -x "$file" ] \
+            && [ "$(git -C "$TARGET" hash-object -- "$name")" = "$expected" ]; then
+            chmod a-x "$file"
+            echo "[Bootstrap] Repaired executable permissions on $name."
+        fi
+    done
     git -C "$TARGET" pull --ff-only
 else
     echo "[Bootstrap] Cloning $REPO_URL → $TARGET..."
@@ -46,10 +60,9 @@ else
 fi
 
 cd "$TARGET"
-chmod +x essentials.sh setup_*.sh install.sh 2>/dev/null || true
 
 echo
 echo "[Bootstrap] Repository ready at $TARGET."
 echo "[Bootstrap] Starting system setup..."
 echo
-exec ./essentials.sh "$@"
+exec bash ./essentials.sh "$@"

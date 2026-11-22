@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Add the kiosk escape shortcut without discarding existing labwc settings."""
 import sys
 import xml.etree.ElementTree as ET

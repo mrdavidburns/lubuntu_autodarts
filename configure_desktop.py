@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
 """Configure LXQt's main-menu icon and pcmanfm-qt desktop wallpaper."""
-from pathlib import Path
+
 import re
 import shutil
 import sys
+from pathlib import Path
 
 
 def _set_section_keys(section: str, updates: dict[str, str]) -> str:
@@ -58,9 +58,7 @@ def configure_wallpaper(path: Path, wallpaper: str, mode: str = "stretch") -> No
         break
     if not found:
         desktop_block = "[Desktop]\n" + "\n".join(f"{k}={v}" for k, v in updates.items()) + "\n"
-        if text and not text.endswith("\n"):
-            desktop_block = "\n" + desktop_block
-        elif text and not text.endswith("\n\n"):
+        if text and not text.endswith("\n\n"):
             desktop_block = "\n" + desktop_block
         sections.append(desktop_block)
     updated = ''.join(sections)

@@ -34,6 +34,7 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
   Wired into `essentials.sh` after the Plymouth step.
 
 ### Fixed
+- Continue setup with a warning when Chrome Remote Desktop's package dependencies are unavailable on the host distribution.
 - Use the current AutoDarts logo for branded desktop shortcuts.
 - Disable legacy AutoDarts Chrome autostarts when installing the watchdog to prevent duplicate browser windows after upgrades.
 - CI smoke build no longer references nonexistent `logger` package

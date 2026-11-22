@@ -15,7 +15,14 @@ ad_install_remote_desktop() {
     chmod 0755 "$tmp"
     ad_retry 4 curl -fsSL https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb -o "$tmp/chrome-remote-desktop.deb" || rc=$?
     if [ "$rc" -eq 0 ]; then
-        ad_apt install "$tmp/chrome-remote-desktop.deb" || rc=$?
+        # Resolve dependencies without changing the system first. Google's current
+        # package can require newer libraries than an otherwise supported distro.
+        if apt-get -s install "$tmp/chrome-remote-desktop.deb" >"$tmp/apt-simulation.log" 2>&1; then
+            ad_apt install "$tmp/chrome-remote-desktop.deb" || rc=$?
+        else
+            cat "$tmp/apt-simulation.log"
+            ad_warn "Chrome Remote Desktop dependencies could not be resolved; skipping the host and continuing setup."
+        fi
     fi
     rm -rf "$tmp"
     return "$rc"

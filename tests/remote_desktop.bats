@@ -9,7 +9,17 @@ setup() {
     dpkg() { echo "${TEST_ARCH:-amd64}"; }
     dpkg-query() { return 1; }
     curl() { printf 'package' > "$4"; }
+    apt-get() { [ "$1" = -s ] && [ "$2" = install ] && [ -f "$3" ]; }
     ad_apt() { [ "$1" = install ] && [ -f "$2" ] && echo installed > "$TEST_DIR/result"; }
+}
+
+@test "skips an incompatible host without changing packages" {
+    apt-get() { echo 'libxtst6 dependency cannot be satisfied'; return 100; }
+    run ad_install_remote_desktop
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"libxtst6 dependency cannot be satisfied"* ]]
+    [[ "$output" == *"skipping the host"* ]]
+    [ ! -f "$TEST_DIR/result" ]
 }
 
 teardown() { rm -rf "$TEST_DIR"; }

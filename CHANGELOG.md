@@ -36,6 +36,7 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
   Wired into `essentials.sh` after the Plymouth step.
 
 ### Fixed
+- Wait for the apt archive lock and recheck package locks on retries, including during ZRAM installation.
 - Brand LXQt menu sections that inherit their plugin type from system defaults, including Lubuntu's Fancy Menu.
 - Wait for the LXQt panel to start before applying branding, and log the login-time repair for troubleshooting.
 - Apply AutoDarts menu icon and text to LXQt Fancy Menu as well as the classic Main Menu.

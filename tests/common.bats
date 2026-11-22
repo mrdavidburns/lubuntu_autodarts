@@ -44,10 +44,36 @@ setup() {
 
 @test "ad_apt stops when the package lock is unavailable" {
     ad_wait_apt_lock() { return 1; }
-    ad_retry() { echo "apt was invoked"; }
+    ad_retry() { shift; "$@"; }
     run ad_apt update
     [ "$status" -ne 0 ]
     [ -z "$output" ]
+}
+
+@test "waits for the apt archive lock before proceeding" {
+    tmp=$(mktemp -d)
+    fuser() {
+        [ "$1" = /var/cache/apt/archives/lock ] || return 1
+        [ ! -f "$tmp/released" ]
+    }
+    sleep() { touch "$tmp/released"; }
+    ad_warn() { :; }
+    ad_wait_apt_lock 10
+    [ -f "$tmp/released" ]
+    rm -rf "$tmp"
+}
+
+@test "rechecks package locks after a failed apt attempt" {
+    tmp=$(mktemp -d)
+    ad_wait_apt_lock() { echo checked >> "$tmp/checks"; }
+    apt-get() {
+        if [ ! -f "$tmp/attempted" ]; then touch "$tmp/attempted"; return 1; fi
+    }
+    sleep() { :; }
+    ad_warn() { :; }
+    ad_apt install zram-tools
+    [ "$(wc -l < "$tmp/checks" | tr -d ' ')" = 2 ]
+    rm -rf "$tmp"
 }
 
 @test "ad_atomic_write writes content + mode" {

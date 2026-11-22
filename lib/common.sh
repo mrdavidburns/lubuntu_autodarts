@@ -177,14 +177,14 @@ ad_retry() {
     done
 }
 
-# Wait for the dpkg/apt frontend lock so apt commands don't collide with
-# unattended-upgrades or another setup run.
+# Wait for dpkg and apt locks so commands don't collide with other package jobs.
 ad_wait_apt_lock() {
     local max="${1:-300}"
     local waited=0
     while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 \
         || fuser /var/lib/dpkg/lock >/dev/null 2>&1 \
-        || fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+        || fuser /var/lib/apt/lists/lock >/dev/null 2>&1 \
+        || fuser /var/cache/apt/archives/lock >/dev/null 2>&1; do
         if [ "$waited" -ge "$max" ]; then
             ad_err "timed out waiting for apt lock after ${max}s"
             return 1
@@ -196,11 +196,15 @@ ad_wait_apt_lock() {
     return 0
 }
 
-# Wrap apt operations: wait for lock + retry on transient failures.
-ad_apt() {
+# Recheck the locks on every attempt in case another apt process starts
+# between the initial lock check and apt-get acquiring its locks.
+ad_apt_once() {
     ad_wait_apt_lock || return 1
-    ad_retry 4 apt-get -y "$@"
+    apt-get -y "$@"
 }
+
+# Wrap apt operations: wait for locks + retry on transient failures.
+ad_apt() { ad_retry 4 ad_apt_once "$@"; }
 
 # Stamp file under /var/lib/autodarts to skip expensive idempotent steps.
 # Usage: ad_stamp_check <stamp> <hash>; rc 0 = unchanged.

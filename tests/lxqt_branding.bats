@@ -4,8 +4,15 @@ setup() {
     TEST_DIR=$(mktemp -d)
     export TEST_DIR
     mkdir -p "$TEST_DIR/bin" "$TEST_DIR/home/.config/autostart"
-    printf '#!/bin/sh\nprintf "%%s\\n" "$*" >> "$TEST_DIR/calls"\n' > "$TEST_DIR/bin/dbus-send"
-    printf '#!/bin/sh\nexit 1\n' > "$TEST_DIR/bin/pgrep"
+    cat > "$TEST_DIR/bin/dbus-send" <<'SCRIPT'
+#!/bin/sh
+printf '%s\n' "$*" >> "$TEST_DIR/calls"
+case "$*" in
+    *stopModule*) touch "$TEST_DIR/stopped" ;;
+    *startModule*) rm -f "$TEST_DIR/stopped" ;;
+esac
+SCRIPT
+    printf '#!/bin/sh\n[ ! -f "$TEST_DIR/stopped" ]\n' > "$TEST_DIR/bin/pgrep"
     printf '#!/bin/sh\nexit "${PYTHON_RESULT:-0}"\n' > "$TEST_DIR/bin/python3"
     chmod +x "$TEST_DIR/bin/"*
     touch "$TEST_DIR/home/.config/autostart/autodarts-lxqt-branding.desktop"
@@ -26,4 +33,15 @@ teardown() { rm -rf "$TEST_DIR"; }
     [ "$status" -ne 0 ]
     grep -q 'startModule' "$TEST_DIR/calls"
     [ -e "$TEST_DIR/home/.config/autostart/autodarts-lxqt-branding.desktop" ]
+}
+
+@test "waits for the panel and keeps retry when it never starts" {
+    printf '#!/bin/sh\nexit 1\n' > "$TEST_DIR/bin/pgrep"
+    printf '#!/bin/sh\nexit 0\n' > "$TEST_DIR/bin/sleep"
+    chmod +x "$TEST_DIR/bin/sleep"
+    run env HOME="$TEST_DIR/home" PATH="$TEST_DIR/bin:$PATH" sh lib/apply-lxqt-branding
+    [ "$status" -ne 0 ]
+    [ ! -e "$TEST_DIR/calls" ]
+    [ -e "$TEST_DIR/home/.config/autostart/autodarts-lxqt-branding.desktop" ]
+    grep -q 'panel did not start' "$TEST_DIR/home/.local/state/autodarts-panel-branding.log"
 }

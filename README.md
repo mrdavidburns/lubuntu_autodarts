@@ -383,8 +383,9 @@ Boot time and theme availability vary by hardware and distribution.
 - Verify that Chrome or Chromium is installed. Desktop mode does not enable browser autostart.
 
 ### Panel customizations not applied
-- The script requires an existing `~/.config/lxqt/panel.conf` file
-- Try logging out and back in, then re-run the script
+- Complete the installer and log out and back in so the branding helper can restart the panel.
+- Check `~/.local/state/autodarts-panel-branding.log` for the login-time helper's result. The helper keeps its autostart entry when it cannot finish, so it can retry next login.
+- Inspect the Main Menu or Fancy Menu section of `~/.config/lxqt/panel.conf`; the installer can create it from an available LXQt default when the user file is absent.
 
 ## Requirements
 

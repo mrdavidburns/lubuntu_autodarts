@@ -105,8 +105,8 @@ EOF
     ad_apt install google-chrome-stable
 }
 ad_step "Install Google Chrome / Chromium" install_chrome
-ad_step "Install Chrome Remote Desktop host" ad_install_remote_desktop
-ad_step "Install Chrome Remote Desktop shortcut" bash "$SCRIPT_DIR/setup_remote_desktop_shortcut.sh"
+ad_step "Install RustDesk" ad_install_remote_desktop
+ad_step "Install RustDesk shortcut" bash "$SCRIPT_DIR/setup_remote_desktop_shortcut.sh"
 
 # 2. AutoDarts (run as kiosk user)
 ad_step "Install AutoDarts" \

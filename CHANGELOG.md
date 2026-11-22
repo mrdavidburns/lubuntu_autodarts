@@ -6,6 +6,7 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 ### Added
+- Install RustDesk and provide its desktop shortcut in both modes, replacing Chrome Remote Desktop for new installations.
 - Desktop shortcut to Chrome Remote Desktop's web interface when its host is installed, in both install modes.
 - Install the Chrome Remote Desktop host on amd64 in both modes; document enrollment and the ARM limitation.
 - Raspberry Pi OS labwc wallpaper and per-user panel icon branding on next login.

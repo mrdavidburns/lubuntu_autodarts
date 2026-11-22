@@ -14,6 +14,8 @@ fi
 ACTUAL_USER="${SUDO_USER:-${USER:-$(id -un)}}"
 ACTUAL_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/shortcut_trust.sh"
 DESKTOP="$ACTUAL_HOME/Desktop"
 ICON_DIR="$ACTUAL_HOME/.local/share/icons"
 
@@ -41,7 +43,9 @@ EOF
     chmod +x "$file"
     chown "$ACTUAL_USER:$ACTUAL_USER" "$file"
     # Mark trusted for pcmanfm-qt so double-click works without a prompt.
-    sudo -u "$ACTUAL_USER" gio set "$file" "metadata::trusted" true 2>/dev/null || true
+    if ! ad_trust_shortcut "$ACTUAL_USER" "$file"; then
+        echo "Warning: could not mark $file trusted; use 'Trust this executable' on the desktop." >&2
+    fi
 }
 
 write_shortcut "Restart AutoDarts" \

@@ -35,6 +35,7 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
   Wired into `essentials.sh` after the Plymouth step.
 
 ### Fixed
+- Mark installer-created desktop shortcuts trusted for PCManFM-Qt so they can launch without a confirmation prompt.
 - Repair permission-only changes made by older bootstraps before pulling updates, without discarding file edits.
 - Continue setup with a warning when Chrome Remote Desktop's package dependencies are unavailable on the host distribution.
 - Use the current AutoDarts logo for branded desktop shortcuts.

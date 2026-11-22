@@ -63,7 +63,7 @@ ad_confirm || exit 1
 printf '%s\n' "$AD_INSTALL_MODE" | ad_atomic_write /etc/autodarts/install-mode 0644 root:root
 
 ad_apt update
-ad_apt install curl wget lsb-release ca-certificates
+ad_apt install curl wget lsb-release ca-certificates gvfs dbus
 if apt-cache show software-properties-common >/dev/null 2>&1; then
     ad_apt install software-properties-common
 fi

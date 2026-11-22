@@ -35,6 +35,8 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
   Wired into `essentials.sh` after the Plymouth step.
 
 ### Fixed
+- Retry trust for unchanged installer-created shortcuts in the graphical session, where GVFS metadata is available.
+- Document the user's successful Lubuntu 26.04 upgrade and remaining shortcut trust issue.
 - Mark installer-created desktop shortcuts trusted for PCManFM-Qt so they can launch without a confirmation prompt.
 - Repair permission-only changes made by older bootstraps before pulling updates, without discarding file edits.
 - Continue setup with a warning when Chrome Remote Desktop's package dependencies are unavailable on the host distribution.

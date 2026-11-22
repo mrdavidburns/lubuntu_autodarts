@@ -24,6 +24,7 @@ The choice is saved in `/etc/autodarts/install-mode` and reused by unattended we
 
 | System | Status |
 | --- | --- |
+| Lubuntu 26.04, LXQt | User reports the upgraded installation is working; desktop shortcut trust prompts are still being investigated. |
 | Lubuntu 24.04, LXQt | Kiosk installation exercised on a test VM; hardware and individual features can vary. |
 | Raspberry Pi OS (Debian 13 / Trixie, arm64) | Installation was run on a Raspberry Pi 4 but did not complete; the GRUB failure has been addressed in code. Desktop integration and end-to-end operation still need hardware validation. |
 | Other Ubuntu or Debian releases and derivatives | The installer accepts Debian/Ubuntu family systems, but these combinations have not been validated end to end. Package availability, display managers, architecture, and upstream AutoDarts support may limit functionality. |
@@ -37,6 +38,8 @@ X11 is the recommended session for unattended access. RustDesk's standard Waylan
 ## Desktop compatibility
 
 The installer detects a running LXQt, labwc, or Wayfire session for the kiosk user. LXQt retains its existing desktop branding and shortcuts. On Raspberry Pi OS with labwc, PCManFM and wf-panel-pi, the wallpaper and menu icon are configured for the next graphical login. The Raspberry Pi menu widget does not support a separate text label, so the AUTODARTS menu text is available only on LXQt. Ctrl+Alt+Q is configured in labwc. Wayfire and other desktops can run the browser and desktop launchers, but automatic wallpaper, menu branding, exit hotkey, notification suppression, and brightness shortcuts are not configured. X11 screen-blanking and cursor settings do not control a native Wayland session; configure its compositor's idle settings separately. These desktop paths have not yet been validated on Raspberry Pi hardware.
+
+The installer marks its desktop shortcuts trusted and retries at graphical login if desktop metadata was unavailable during setup. Log out and back in after installation. If an exclamation mark remains, right-click the shortcut and select **Trust this executable**; GVFS must be available for the setting to persist.
 
 When installing over SSH or without a running graphical session, select the desktop explicitly, for example `sudo AD_DESKTOP=labwc ./essentials.sh`. Supported values are `lxqt`, `labwc`, and `wayfire`. Reboot or log out and back in after installation. Raspberry Pi firmware boot does not use GRUB, so the GRUB theme is skipped when GRUB is absent.
 

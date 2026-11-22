@@ -1,0 +1,12 @@
+#!/bin/bash
+# Run in the desktop session so GVFS can persist LXQt launcher trust.
+set -u
+for name in Restart_AutoDarts AutoDarts_Status Shutdown Sound_Test Open_SUIT Reboot RustDesk; do
+    file="$HOME/Desktop/$name.desktop"
+    hashfile="$HOME/.config/autodarts/shortcut-trust/$name.sha256"
+    [ -f "$file" ] && [ -f "$hashfile" ] || continue
+    expected=$(cat "$hashfile")
+    actual=$(sha256sum "$file")
+    [ "${actual%% *}" = "$expected" ] || continue
+    gio set "$file" metadata::trust true || echo "Could not trust $file" >&2
+done

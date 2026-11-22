@@ -42,6 +42,7 @@ Categories=System;
 EOF
     chmod +x "$file"
     chown "$ACTUAL_USER:$ACTUAL_USER" "$file"
+    ad_register_shortcut_trust "$ACTUAL_USER" "$ACTUAL_HOME" "$file" "$SCRIPT_DIR"
     # Mark trusted for pcmanfm-qt so double-click works without a prompt.
     if ! ad_trust_shortcut "$ACTUAL_USER" "$file"; then
         echo "Warning: could not mark $file trusted; use 'Trust this executable' on the desktop." >&2

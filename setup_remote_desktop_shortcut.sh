@@ -33,6 +33,7 @@ StartupNotify=false
 Categories=Network;RemoteAccess;
 ENTRY
 chmod +x "$SHORTCUT"
+ad_register_shortcut_trust "$ACTUAL_USER" "$ACTUAL_HOME" "$SHORTCUT" "$SCRIPT_DIR"
 if ! ad_trust_shortcut "$ACTUAL_USER" "$SHORTCUT"; then
     echo "Warning: could not mark $SHORTCUT trusted; use 'Trust this executable' on the desktop." >&2
 fi

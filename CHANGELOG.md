@@ -6,6 +6,7 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 ### Added
+- Enable and supervise the AutoDarts headless user service at boot in both install modes.
 - Install the current official AutoDarts headless release and document board setup, service activation, and legacy migration.
 - Install RustDesk and provide its desktop shortcut in both modes, replacing Chrome Remote Desktop for new installations.
 - Desktop shortcut to Chrome Remote Desktop's web interface when its host is installed, in both install modes.

@@ -42,6 +42,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/lib/verify.sh"
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/lib/remote_desktop.sh"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/autodarts_service.sh"
 
 trap 'ad_on_err $LINENO $? "$BASH_COMMAND"' ERR
 
@@ -137,7 +139,8 @@ install_autodarts() {
     return "$rc"
 }
 ad_step "Install AutoDarts" install_autodarts
-ad_warn "Complete AutoDarts setup: run ~/.local/bin/autodarts, sign in, configure the board, and select Run as a service."
+ad_step "Enable AutoDarts board service" ad_setup_autodarts_service "$ACTUAL_USER" "$ACTUAL_HOME"
+ad_warn "Complete AutoDarts setup: run ~/.local/bin/autodarts, sign in, and configure the board."
 
 # 3. Chrome managed-policy + force-installed extensions
 if [ "$AD_INSTALL_MODE" = kiosk ]; then

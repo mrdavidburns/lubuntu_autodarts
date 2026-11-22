@@ -54,7 +54,9 @@ curl -fsSL https://raw.githubusercontent.com/mrdavidburns/lubuntu_autodarts/main
 
 Clones the repo to `~/lubuntu_autodarts` and runs `essentials.sh`.
 
-Both modes use the [official AutoDarts headless installer](https://docs.autodarts.com/getting-started/detection/headless-installation/) with `--headless`. After setup, run `~/.local/bin/autodarts` as the normal user, sign in, set up and calibrate the board, then select **Run as a service** in its Service section to start detection automatically. The upstream installer does not enable this service on a fresh install. Its Board Manager is available at `http://localhost:3180/` while the board is running.
+Both modes use the [official AutoDarts headless installer](https://docs.autodarts.com/getting-started/detection/headless-installation/) with `--headless`. This installer enables the AutoDarts user service, starts it immediately, enables user lingering so it starts at boot, and configures automatic restart. An existing AutoDarts user service is preserved. Run `~/.local/bin/autodarts` as the normal user to sign in, set up and calibrate the board. Its Board Manager is available at `http://localhost:3180/` while the board is running.
+
+Check the board service with `systemctl --user status autodarts.service` and its log with `journalctl --user -u autodarts.service -b`. If you previously started `autodarts run` manually, stop that terminal process before running the installer so only one board process uses the cameras and port.
 
 On an older installation, upstream may remove the old AutoDarts program and system services as part of migration; its documentation says existing board settings are retained. Recheck sign-in, calibration, and service startup after migration. The current headless installer may require sudo for legacy cleanup, even though fresh installation does not. The desktop firewall denies incoming connections except the rules described above, so network access to Board Manager is not enabled automatically.
 

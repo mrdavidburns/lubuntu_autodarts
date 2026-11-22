@@ -80,8 +80,8 @@ operator commands, weekly backups and repository self-updates. Both modes
 configure desktop branding where supported, install GRUB (when present)
 and Plymouth branding, mask sleep/hibernate,
 and reset UFW to deny incoming traffic except mDNS and Tailscale.
-AutoDarts may migrate an older installation; its new service must be enabled
-in AutoDarts after installation for the board to start automatically.
+AutoDarts may migrate an older installation; its board service is enabled
+for automatic startup in both modes.
 EOF
     if [ "$AD_INSTALL_MODE" = kiosk ]; then
         cat >/dev/tty <<EOF

@@ -22,6 +22,10 @@ ad_verify() {
     ad_check "Chrome or Chromium installed" bash -c 'command -v google-chrome-stable || command -v chromium || command -v chromium-browser'
     ad_check "AutoDarts headless command installed" \
         test -x "$home/.local/bin/autodarts"
+    ad_check "AutoDarts board service active" \
+        sudo -u "$user" -H env XDG_RUNTIME_DIR="/run/user/$(id -u "$user")" \
+        DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u "$user")/bus" \
+        systemctl --user is-active --quiet autodarts.service
     ad_check "SUIT cloned" test -d "$home/SUIT/.git"
     ad_check "Plymouth default = autodarts" \
         bash -c 'plymouth-set-default-theme | grep -q "^autodarts$"'
